@@ -1,1 +1,6 @@
 fastapi[standard]
+alembic
+pydantic_settings
+PyJWT
+python-jose[cryptography]
+passlib[bcrypt]

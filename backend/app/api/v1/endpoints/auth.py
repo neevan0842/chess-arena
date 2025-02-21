@@ -16,7 +16,9 @@ from app.services.auth import (
     create_access_token,
     create_tokens,
     get_current_active_user,
+    get_google_oauth_url,
     get_password_hash,
+    get_token_via_google_code,
     get_user,
     store_refresh_token,
     verify_refresh_token,
@@ -150,4 +152,20 @@ async def logout(
     db.commit()
     return JSONResponse(
         status_code=status.HTTP_200_OK, content={"message": "Logout Successful"}
+    )
+
+
+@router.get("/google")
+async def oauth_google_redirect_url():
+    google_oauth_url = get_google_oauth_url()
+    return JSONResponse(
+        status_code=status.HTTP_200_OK, content={"url": google_oauth_url}
+    )
+
+
+@router.get("/google/callback")
+async def oauth_google_callback(code: str, db: Session = Depends(get_db)):
+    access_token, refresh_token = await get_token_via_google_code(code, db)
+    return LoginResponse(
+        access_token=access_token, refresh_token=refresh_token, token_type="bearer"
     )

@@ -1,6 +1,7 @@
+import uuid
 import jwt
 import requests
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Response, status
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 from app.core.config import settings
@@ -18,10 +19,10 @@ ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 ACCESS_TOKEN_SECRET = settings.ACCESS_TOKEN_SECRET
 ALGORITHM = settings.ALGORITHM
 REFRESH_TOKEN_EXPIRE_MINUTES = settings.REFRESH_TOKEN_EXPIRE_MINUTES
-REFRESH_TOKEN_SECRET = settings.REFRESH_TOKEN_SECRET
 GOOGLE_CLIENT_ID = settings.GOOGLE_CLIENT_ID
 GOOGLE_CLIENT_SECRET = settings.GOOGLE_CLIENT_SECRET
 GOOGLE_REDIRECT_URI = settings.GOOGLE_REDIRECT_URI
+SECURE_COOKIE = settings.SECURE_COOKIE
 
 
 # Hash password
@@ -46,20 +47,14 @@ def create_access_token(data: dict):
 
 
 # create refresh token
-def create_refresh_token(data: dict):
-    refresh_token_expires = datetime.now(timezone.utc) + timedelta(
-        minutes=REFRESH_TOKEN_EXPIRE_MINUTES
-    )
-    to_encode = data.copy()
-    to_encode.update({"exp": refresh_token_expires})
-    encoded_jwt = jwt.encode(to_encode, REFRESH_TOKEN_SECRET, algorithm=ALGORITHM)
-    return encoded_jwt
+def create_refresh_token():
+    return str(uuid.uuid4())
 
 
 # Create access and refresh tokens
 def create_tokens(data: dict):
     access_token = create_access_token(data)
-    refresh_token = create_refresh_token(data)
+    refresh_token = create_refresh_token()
 
     return access_token, refresh_token
 
@@ -67,31 +62,37 @@ def create_tokens(data: dict):
 # Save refresh token to DB
 def store_refresh_token(db: Session, user_id: str, refresh_token: str):
     user = db.query(User).filter(User.id == user_id).first()
-    if user:
-        user.refresh_token = refresh_token
-    else:
-        return None
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.refresh_token = refresh_token
     db.commit()
-    return user
 
 
 # verify refresh token
 def verify_refresh_token(refresh_token: str, db: Session):
-    try:
-        payload = jwt.decode(
-            refresh_token, REFRESH_TOKEN_SECRET, algorithms=[ALGORITHM]
-        )
-        user_id: str = payload.get("id")
-        if user_id is None:
-            return None
-    except InvalidTokenError:
+    user = db.query(User).filter(User.refresh_token == refresh_token).first()
+    if not user:
         return None
-    db_user = db.query(User).filter(User.id == user_id).first()
-    if not db_user:
-        return None
-    if db_user.refresh_token != refresh_token:
-        return None
-    return db_user
+    return user  # Return user object if valid
+
+
+# Set refresh token as httpOnly cookie
+def set_refresh_token_cookie(
+    response: Response,
+    refresh_token: str,
+    max_age: int = 60 * 60 * 24 * 7,
+    secure: bool = SECURE_COOKIE,
+    httponly: bool = True,
+    samesite: str = "lax",
+):
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=httponly,
+        secure=secure,
+        samesite=samesite,
+        max_age=max_age,
+    )
 
 
 # get user from email or username
@@ -170,16 +171,15 @@ async def get_token_via_google_code(code: str, db: Session):
             username = await generate_unique_username(
                 user_info_data.get("email").split("@")[0], db
             )
-            user = User(
+            db_user = User(
                 email=email,
                 username=username,
                 oauth_provider="google",
                 oauth_provider_id=user_info_data.get("id"),
             )
-            db.add(user)
+            db.add(db_user)
             db.commit()
-            db.refresh(user)
-            db_user = user
+            db.refresh(db_user)
 
         # Step 4: Generate JWT tokens
         access_token, refresh_token = create_tokens({"id": db_user.id})

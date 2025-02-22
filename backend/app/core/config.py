@@ -8,7 +8,6 @@ class Settings(BaseSettings):
 
     # Auth
     ACCESS_TOKEN_SECRET: str
-    REFRESH_TOKEN_SECRET: str
     ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
     REFRESH_TOKEN_EXPIRE_MINUTES: int
@@ -17,6 +16,9 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_ID: str
     GOOGLE_CLIENT_SECRET: str
     GOOGLE_REDIRECT_URI: str
+
+    # Cookie
+    SECURE_COOKIE: bool = False
 
     model_config = ConfigDict(env_file=".env")
 

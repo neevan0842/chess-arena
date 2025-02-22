@@ -1,10 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from app.schemas.auth import (
     LoginResponse,
     RefreshResponse,
-    RegisterRequest,
     UserRegister,
     UserResponse,
 )
@@ -20,6 +19,7 @@ from app.services.auth import (
     get_password_hash,
     get_token_via_google_code,
     get_user,
+    set_refresh_token_cookie,
     store_refresh_token,
     verify_refresh_token,
 )
@@ -32,20 +32,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
     "/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED
 )
 async def register(user: UserRegister, db: Session = Depends(get_db)):
-    """
-    Register a new user.
 
-    Parameters:
-    - user (UserRegister): The user to create.
-    - db (Session): The database session.
-
-    Returns:
-    - UserResponse: The newly created user.
-
-    Raises:
-    - HTTPException: If the email or username already exist.
-    """
-    print(user, flush=True)
     if get_user(email=user.email, db=db):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Email already exists"
@@ -66,29 +53,10 @@ async def register(user: UserRegister, db: Session = Depends(get_db)):
 
 @router.post("/login")
 async def login(
-    form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
+    response: Response,
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db),
 ):
-    """
-    Authenticate user and generate access and refresh tokens.
-
-    This endpoint allows a user to log in by providing their username and
-    password. If the credentials are valid, an access token and a refresh
-    token are generated and returned. The refresh token is stored in the
-    database for future use.
-
-    Parameters:
-    - form_data (OAuth2PasswordRequestForm): An object containing the user's
-      credentials (username and password).
-    - db (Session): The database session dependency.
-
-    Returns:
-    - LoginResponse: An object containing the access token, refresh token,
-      and token type.
-
-    Raises:
-    - HTTPException: If the credentials are incorrect or if the refresh
-      token could not be saved to the database.
-    """
 
     user = authenticate_user(
         username=form_data.username, password=form_data.password, db=db
@@ -100,35 +68,15 @@ async def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
     access_token, refresh_token = create_tokens(data={"id": user.id})
-    user = store_refresh_token(db=db, user_id=user.id, refresh_token=refresh_token)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Refresh token could not be saved",
-        )
-    return LoginResponse(
-        access_token=access_token, refresh_token=refresh_token, token_type="bearer"
-    )
+    store_refresh_token(db=db, user_id=user.id, refresh_token=refresh_token)
+    # Set refresh token as httpOnly cookie
+    set_refresh_token_cookie(response=response, refresh_token=refresh_token)
+    return LoginResponse(access_token=access_token, token_type="bearer")
 
 
 @router.post("/refresh")
-async def refresh_token(payload: RegisterRequest, db: Session = Depends(get_db)):
-    """
-    Refresh the access token using a valid refresh token.
-
-    This endpoint allows a user to obtain a new access token by providing
-    a valid refresh token. If the refresh token is invalid or expired,
-    an HTTP 401 Unauthorized error is raised.
-
-    Parameters:
-    - payload (RegisterRequest): An object containing the refresh token.
-    - db (Session): Database session dependency.
-
-    Returns:
-    - RefreshResponse: An object containing the new access token and token type.
-    """
-
-    refresh_token = payload.refresh_token
+async def refresh_token(request: Request, db: Session = Depends(get_db)):
+    refresh_token = request.cookies.get("refresh_token")
     db_user = verify_refresh_token(refresh_token=refresh_token, db=db)
     if not db_user:
         raise HTTPException(
@@ -141,7 +89,9 @@ async def refresh_token(payload: RegisterRequest, db: Session = Depends(get_db))
 
 @router.post("/logout")
 async def logout(
-    current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)
+    response: Response,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
 ):
     """
     Remove the refresh token from the current user, effectively logging them out
@@ -150,6 +100,7 @@ async def logout(
     db_user = db.query(User).filter(User.id == current_user.id).first()
     db_user.refresh_token = None
     db.commit()
+    response.delete_cookie("refresh_token")
     return JSONResponse(
         status_code=status.HTTP_200_OK, content={"message": "Logout Successful"}
     )
@@ -164,8 +115,10 @@ async def oauth_google_redirect_url():
 
 
 @router.get("/google/callback")
-async def oauth_google_callback(code: str, db: Session = Depends(get_db)):
+async def oauth_google_callback(
+    code: str, response: Response, db: Session = Depends(get_db)
+):
     access_token, refresh_token = await get_token_via_google_code(code, db)
-    return LoginResponse(
-        access_token=access_token, refresh_token=refresh_token, token_type="bearer"
-    )
+    # Set refresh token as httpOnly cookie
+    set_refresh_token_cookie(response=response, refresh_token=refresh_token)
+    return LoginResponse(access_token=access_token, token_type="bearer")

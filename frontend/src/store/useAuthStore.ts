@@ -13,6 +13,7 @@ import {
 interface AuthState {
   accessToken: string | null;
   user: UserInterface | null;
+  isLoggedIn: boolean;
   // Actions:
   login: (username: string, password: string) => Promise<void>;
   register: (
@@ -20,9 +21,18 @@ interface AuthState {
     email: string,
     password: string
   ) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   refreshAccessToken: () => Promise<void>;
   fetchProfile: () => Promise<void>;
+}
+
+// A small helper to reset auth-related state
+function resetAuthState(set: (fn: (state: AuthState) => void) => void) {
+  set((state) => {
+    state.accessToken = null;
+    state.user = null;
+    state.isLoggedIn = false;
+  });
 }
 
 const useAuthStore = create<AuthState>()(
@@ -30,58 +40,69 @@ const useAuthStore = create<AuthState>()(
     immer((set) => ({
       accessToken: null,
       user: null,
+      isLoggedIn: false,
 
       // Login: call your login API.
       login: async (username: string, password: string) => {
         const response = await loginUser({ username, password });
-        if (response && response?.access_token) {
-          set((state) => {
-            state.accessToken = response.access_token;
-          });
-          const userProfile = await fetchUserProfile();
-          set((state) => {
-            state.user = userProfile;
-          });
+        if (!response || !response?.access_token) {
+          resetAuthState(set);
+          return;
         }
+        set((state) => {
+          state.accessToken = response.access_token;
+        });
+        const userProfile = await fetchUserProfile();
+        if (!userProfile || !userProfile?.id) {
+          resetAuthState(set);
+          return;
+        }
+        set((state) => {
+          state.user = userProfile;
+          state.isLoggedIn = true;
+        });
+        return;
       },
 
       // Register: call your register API.
       register: async (username: string, email: string, password: string) => {
-        await registerUser({ username, email, password });
-        // Optionally redirect to login page after registration. TODO
+        const data = await registerUser({ username, email, password });
+        if (!data || !data?.id) {
+          resetAuthState(set);
+          return;
+        }
+        return;
       },
 
       // Logout: clear auth state.
       logout: async () => {
         const response = await logoutUser();
         if (response && response?.message) {
-          set((state) => {
-            state.accessToken = null;
-            state.user = null;
-          });
+          resetAuthState(set);
+          return;
         }
-        // You may want to call an API logout endpoint to clear the refresh token cookie. TODO
       },
 
       // Refresh the access token using the backend endpoint.
       // The refresh token is read from the httpOnly cookie.
       refreshAccessToken: async () => {
         const response = await getAccessTokenWithRefreshToken();
-        if (response && response?.access_token) {
-          set((state) => {
-            state.accessToken = response.access_token;
-          });
-        } else {
-          set((state) => {
-            state.accessToken = null;
-            state.user = null;
-          });
+        if (!response || !response?.access_token) {
+          resetAuthState(set);
+          return;
         }
+        set((state) => {
+          state.accessToken = response.access_token;
+        });
       },
 
       // Fetch and store the user's profile.
       fetchProfile: async () => {
         const userProfile = await fetchUserProfile();
+        if (!userProfile || !userProfile?.id) {
+          resetAuthState(set);
+          return;
+        }
         set((state) => {
           state.user = userProfile;
         });

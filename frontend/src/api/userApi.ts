@@ -30,7 +30,7 @@ const loginUser = async ({
       formData
     );
     if (response.status !== 200) {
-      throw new Error("Login failed");
+      return null;
     }
     return response.data;
   } catch (error) {
@@ -55,7 +55,8 @@ const registerUser = async ({
       password,
     });
     if (response.status !== 201) {
-      throw new Error("Registration failed");
+      console.error(response);
+      return null;
     }
     return response.data;
   } catch (error) {
@@ -68,7 +69,8 @@ const fetchUserProfile = async (): Promise<UserInterface | null> => {
   try {
     const response = await apiAuthenticated.get("/api/v1/users/me");
     if (response.status !== 200) {
-      throw new Error("Failed to fetch user profile");
+      console.error(response);
+      return null;
     }
     const data: UserInterface = {
       ...response.data,
@@ -85,7 +87,8 @@ const logoutUser = async (): Promise<{ message: string } | null> => {
   try {
     const response = await apiAuthenticated.post("/api/v1/auth/logout");
     if (response.status !== 200) {
-      throw new Error("Logout failed");
+      console.error(response);
+      return null;
     }
     return response.data;
   } catch (error) {
@@ -99,7 +102,8 @@ const getAccessTokenWithRefreshToken =
     try {
       const response = await apiUnauthenticated.post("/api/v1/auth/refresh");
       if (response.status !== 200) {
-        throw new Error("Failed to refresh access token");
+        console.error(response);
+        return null;
       }
       return response.data;
     } catch (error) {

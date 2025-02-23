@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import useAuthStore from "@/store/useAuthStore";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { useNavigate } from "react-router";
 
 const Home = () => {
@@ -11,8 +12,10 @@ const Home = () => {
     await logout();
     if (!useAuthStore.getState().isLoggedIn) {
       setAuthorised(() => false);
+      toast.success("Logged out successfully");
     } else {
       setAuthorised(() => true);
+      toast.error("Logout failed");
     }
   };
   useEffect(() => {

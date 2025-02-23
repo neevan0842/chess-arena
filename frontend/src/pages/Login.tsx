@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import useAuthStore from "@/store/useAuthStore";
 import { Label } from "@radix-ui/react-label";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { Link, useNavigate } from "react-router";
 
 const Login = () => {
@@ -11,7 +12,6 @@ const Login = () => {
     username: "",
     password: "",
   });
-  const [error, setError] = useState("");
   const { login } = useAuthStore();
   const navigate = useNavigate();
 
@@ -21,19 +21,19 @@ const Login = () => {
       loginCredentials.username.trim() === "" ||
       loginCredentials.password.trim() === ""
     ) {
-      setError(() => "Please fill in all the fields");
+      toast.error("Please fill in all the fields");
       return;
     }
     try {
       await login(loginCredentials.username, loginCredentials.password);
       if (!useAuthStore.getState().isLoggedIn) {
-        setError(() => "Login failed");
+        toast.error("Invalid username or password");
         return;
       }
-      setError(() => "");
+      toast.success("Logged in successfully");
       navigate("/");
     } catch (error) {
-      setError(() => "Login failed");
+      toast.error("Login failed");
     }
   };
 
@@ -120,7 +120,6 @@ const Login = () => {
                 </>
               </Button>
             </div>
-            {error && <p className="text-red-500">{error}</p>}
           </CardFooter>
         </Card>
 

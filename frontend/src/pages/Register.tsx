@@ -5,6 +5,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Link, useNavigate } from "react-router";
 import { useEffect, useState } from "react";
 import useAuthStore from "@/store/useAuthStore";
+import toast from "react-hot-toast";
 
 const Register = () => {
   const [registerCredentials, setRegisterCredentials] = useState({
@@ -12,7 +13,6 @@ const Register = () => {
     email: "",
     password: "",
   });
-  const [error, setError] = useState("");
   const { register, login } = useAuthStore();
   const navigate = useNavigate();
 
@@ -24,7 +24,7 @@ const Register = () => {
       registerCredentials.email.trim() === "" ||
       registerCredentials.password.trim() === ""
     ) {
-      setError(() => "Please fill in all the fields");
+      toast.error("Please fill in all the fields");
       return;
     }
 
@@ -35,18 +35,18 @@ const Register = () => {
         registerCredentials.password
       );
       if (!useAuthStore.getState().isLoggedIn) {
-        setError(() => "Registration failed");
+        toast.error("Username or email already exists");
         return;
       }
       await login(registerCredentials.username, registerCredentials.password);
       if (!useAuthStore.getState().isLoggedIn) {
-        setError(() => "Registration failed");
+        toast.error("Registration failed");
       } else {
+        toast.success("Registered successfully");
         navigate("/");
-        setError(() => "");
       }
     } catch (error) {
-      setError(() => `Registration failed: ${error}`);
+      toast.error("Registration failed");
     }
   };
 
@@ -102,7 +102,7 @@ const Register = () => {
 
             {/* Password */}
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">New Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -143,7 +143,6 @@ const Register = () => {
                 </>
               </Button>
             </div>
-            {error && <p className="text-red-500">{error}</p>}
           </CardFooter>
         </Card>
 

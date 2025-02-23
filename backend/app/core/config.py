@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_SECRET: str
     GOOGLE_REDIRECT_URI: str
 
+    # Frontend URL
+    FRONTEND_URLS: str
+
     # Cookie
     SECURE_COOKIE: bool = False
 

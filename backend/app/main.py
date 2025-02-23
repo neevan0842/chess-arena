@@ -2,13 +2,16 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from app.api.v1.endpoints import auth, users
+from app.core.config import settings
+
+FRONTEND_URLS = settings.FRONTEND_URLS
 
 app = FastAPI(debug=True)
 
 # CORS middleware configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=FRONTEND_URLS.split(","),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

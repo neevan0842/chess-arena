@@ -80,7 +80,7 @@ def verify_refresh_token(refresh_token: str, db: Session):
 def set_refresh_token_cookie(
     response: Response,
     refresh_token: str,
-    max_age: int = 60 * 60 * 24 * 7,
+    max_age: int = 60 * REFRESH_TOKEN_EXPIRE_MINUTES,
     secure: bool = SECURE_COOKIE,
     httponly: bool = True,
     samesite: str = "lax",

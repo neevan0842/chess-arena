@@ -6,6 +6,11 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str
 
+    # Redis
+    REDIS_HOST: str
+    REDIS_PORT: int
+    REDIS_DB: int
+
     # Auth
     ACCESS_TOKEN_SECRET: str
     ALGORITHM: str

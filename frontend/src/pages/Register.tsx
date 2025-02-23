@@ -13,7 +13,7 @@ const Register = () => {
     email: "",
     password: "",
   });
-  const { register, login } = useAuthStore();
+  const { register, login, getGoogleUrl } = useAuthStore();
   const navigate = useNavigate();
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -34,7 +34,7 @@ const Register = () => {
         registerCredentials.email,
         registerCredentials.password
       );
-      if (!useAuthStore.getState().isLoggedIn) {
+      if (!useAuthStore.getState().user) {
         toast.error("Username or email already exists");
         return;
       }
@@ -47,6 +47,20 @@ const Register = () => {
       }
     } catch (error) {
       toast.error("Registration failed");
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      const url = await getGoogleUrl();
+      if (!url) {
+        toast.error("Google login failed");
+        return;
+      }
+      // Redirect to the Google OAuth URL
+      window.location.href = url;
+    } catch (error) {
+      toast.error("Google login failed");
     }
   };
 
@@ -132,7 +146,12 @@ const Register = () => {
 
             {/* Google Button */}
             <div className="flex space-x-2 w-full">
-              <Button variant="outline" size="lg" className="flex-1">
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={handleGoogleLogin}
+                className="flex-1"
+              >
                 <>
                   <img
                     src="/google-icon.svg"

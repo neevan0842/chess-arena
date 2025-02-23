@@ -4,8 +4,10 @@ import { immer } from "zustand/middleware/immer";
 import {
   fetchUserProfile,
   getAccessTokenWithRefreshToken,
+  getOauthGoogleUrl,
   loginUser,
   logoutUser,
+  OauthGoogleCallback,
   registerUser,
   UserInterface,
 } from "../api/userApi";
@@ -21,6 +23,8 @@ interface AuthState {
     email: string,
     password: string
   ) => Promise<void>;
+  getGoogleUrl: () => Promise<string | null>;
+  googleCallback: (code: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshAccessToken: () => Promise<void>;
   fetchProfile: () => Promise<void>;
@@ -70,7 +74,44 @@ const useAuthStore = create<AuthState>()(
         if (!data || !data?.id) {
           resetAuthState(set);
           return;
+        } else {
+          set((state) => {
+            state.user = data;
+          });
         }
+        return;
+      },
+
+      // Get Google OAuth URL
+      getGoogleUrl: async () => {
+        const response = await getOauthGoogleUrl();
+        if (!response || !response?.url) {
+          resetAuthState(set);
+          return null;
+        }
+        return response.url;
+      },
+
+      // Google OAuth callback
+      googleCallback: async (code: string) => {
+        const response = await OauthGoogleCallback(code);
+        if (!response || !response?.access_token) {
+          resetAuthState(set);
+          return;
+        }
+        set((state) => {
+          state.accessToken = response.access_token;
+        });
+        const userProfile = await fetchUserProfile();
+        if (!userProfile || !userProfile?.id) {
+          resetAuthState(set);
+          return;
+        }
+        set((state) => {
+          state.accessToken = response.access_token;
+          state.user = userProfile;
+          state.isLoggedIn = true;
+        });
         return;
       },
 

@@ -112,6 +112,37 @@ const getAccessTokenWithRefreshToken =
     }
   };
 
+const getOauthGoogleUrl = async (): Promise<{ url: string } | null> => {
+  try {
+    const response = await apiUnauthenticated.get("/api/v1/auth/google");
+    if (response.status !== 200) {
+      console.error(response);
+      return null;
+    }
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+};
+
+const OauthGoogleCallback = async (
+  code: string
+): Promise<LoginResponseInterface | null> => {
+  try {
+    const response = await apiUnauthenticated.get(
+      `/api/v1/auth/google/callback?code=${code}`
+    );
+    if (response.status !== 200) {
+      console.error(response);
+      return null;
+    }
+    return response.data;
+  } catch (error) {
+    return null;
+  }
+};
+
 export type { UserInterface, LoginResponseInterface };
 export {
   loginUser,
@@ -119,4 +150,6 @@ export {
   fetchUserProfile,
   logoutUser,
   getAccessTokenWithRefreshToken,
+  getOauthGoogleUrl,
+  OauthGoogleCallback,
 };

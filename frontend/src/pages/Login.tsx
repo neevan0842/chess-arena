@@ -12,7 +12,7 @@ const Login = () => {
     username: "",
     password: "",
   });
-  const { login } = useAuthStore();
+  const { login, getGoogleUrl } = useAuthStore();
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -34,6 +34,20 @@ const Login = () => {
       navigate("/");
     } catch (error) {
       toast.error("Login failed");
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      const url = await getGoogleUrl();
+      if (!url) {
+        toast.error("Google login failed");
+        return;
+      }
+      // Redirect to the Google OAuth URL
+      window.location.href = url;
+    } catch (error) {
+      toast.error("Google login failed");
     }
   };
 
@@ -109,7 +123,12 @@ const Login = () => {
 
             {/* Social Auth Buttons */}
             <div className="flex space-x-2 w-full">
-              <Button variant="outline" size="lg" className="flex-1">
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={handleGoogleLogin}
+                className="flex-1"
+              >
                 <>
                   <img
                     src="/google-icon.svg"

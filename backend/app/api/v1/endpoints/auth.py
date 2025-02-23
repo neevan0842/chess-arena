@@ -14,6 +14,7 @@ from app.services.auth import (
     authenticate_user,
     create_access_token,
     create_tokens,
+    delete_refresh_token_cookie,
     get_current_active_user,
     get_google_oauth_url,
     get_password_hash,
@@ -100,7 +101,7 @@ async def logout(
     db_user = db.query(User).filter(User.id == current_user.id).first()
     db_user.refresh_token = None
     db.commit()
-    response.delete_cookie("refresh_token")
+    delete_refresh_token_cookie(response=response)
     return JSONResponse(
         status_code=status.HTTP_200_OK, content={"message": "Logout Successful"}
     )

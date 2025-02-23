@@ -95,6 +95,18 @@ def set_refresh_token_cookie(
     )
 
 
+# Delete refresh token cookie
+def delete_refresh_token_cookie(
+    response: Response,
+    secure: bool = SECURE_COOKIE,
+    httponly: bool = True,
+    samesite: str = "lax",
+):
+    response.delete_cookie(
+        key="refresh_token", secure=secure, httponly=httponly, samesite=samesite
+    )
+
+
 # get user from email or username
 def get_user(db: Session, email: str | None = None, username: str | None = None):
     if email:

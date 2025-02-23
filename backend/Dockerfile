@@ -1,12 +1,21 @@
+# Use an official Python 3.10 image as a base
+FROM python:3.10-slim
 
-FROM python:3.10
-
+# Set the working directory to /code
 WORKDIR /code
 
+# Copy the requirements file
 COPY ./requirements.txt /code/requirements.txt
 
+# Install the requirements
 RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
+# Copy the code
 COPY . /code
 
-CMD ["fastapi", "run", "app/main.py", "--port", "80"]
+# Expose the port the app will run on
+EXPOSE 8000
+
+# Set the default command to run the app with FastAPI
+CMD ["fastapi", "dev"]
+

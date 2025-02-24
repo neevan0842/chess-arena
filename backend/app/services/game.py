@@ -7,7 +7,32 @@ import chess
 import json
 
 
-def validate_and_update_move(game_id: int, move: str, player_id: str, db: Session):
+def join_existing_game_multiplayer(game_id: int, db: Session, player_id: str):
+    game = db.query(Game).filter(Game.id == game_id).first()
+    if not game:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Game not found"
+        )
+    if game.player_white_id == player_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You are already in the game",
+        )
+    if game.player_black_id is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Game is full"
+        )
+    game.player_black_id = player_id
+    game.status = GameStatus.ONGOING
+    db.commit()
+    db.refresh(game)
+    return game
+
+
+# Validate and update the move in a multiplayer game and return the updated game and next turn
+def validate_and_update_move_multiplayer(
+    game_id: int, move: str, player_id: str, db: Session
+):
     game = db.query(Game).filter(Game.id == game_id).first()
     if not game:
         raise HTTPException(
@@ -75,16 +100,43 @@ def validate_and_update_move(game_id: int, move: str, player_id: str, db: Sessio
     db.commit()
     db.refresh(game)
 
+    return game, board.turn
+
+
+def resign_game_multiplayer(game_id: int, db: Session, player_id: str):
+    game = db.query(Game).filter(Game.id == game_id).first()
+    if not game:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Game not found"
+        )
+    if game.status != GameStatus.ONGOING:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Game is not ongoing"
+        )
+
+    # Determine winner
+    if game.player_white_id == player_id:
+        game.winner = Winner.BLACK
+    elif game.player_black_id == player_id:
+        game.winner = Winner.WHITE
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="You are not in the game"
+        )
+    game.status = GameStatus.FINISHED
+    db.commit()
+    db.refresh(game)
     return game
 
 
-async def publish_move(game: Game, redis_client: Redis):
+async def publish_move(game: Game, next_turn: str, redis_client: Redis):
     payload = {
         "type": "move",
         "game_id": game.id,
         "fen": game.fen,
         "status": game.status,
         "winner": game.winner,
+        "next_turn": next_turn,
     }
     try:
         await redis_client.publish(f"game_{game.id}", json.dumps(payload))

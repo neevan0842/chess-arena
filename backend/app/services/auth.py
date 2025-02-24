@@ -1,7 +1,7 @@
 import uuid
 import jwt
 import requests
-from fastapi import Depends, HTTPException, Response, status
+from fastapi import Depends, HTTPException, Response, WebSocket, status
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 from app.core.config import settings
@@ -266,3 +266,33 @@ async def get_current_user(
 # get current active user
 async def get_current_active_user(current_user: User = Depends(get_current_user)):
     return current_user
+
+
+# verify logged in user and return token if authenticated
+async def verify_logged_in_user_ws(
+    websocket: WebSocket, db: Session = Depends(get_db)
+) -> str:
+
+    async def credentials_exception():
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Missing token in sec-websocket-protocol header",
+        )
+
+    access_token = websocket.headers.get("sec-websocket-protocol")
+
+    if not access_token:
+        await credentials_exception()
+    try:
+        payload = jwt.decode(access_token, ACCESS_TOKEN_SECRET, algorithms=[ALGORITHM])
+        user_id: str = payload.get("id")
+        if user_id is None:
+            await credentials_exception()
+    except InvalidTokenError:
+        await credentials_exception()
+
+    db_user = db.query(User).filter(User.id == user_id).first()
+    if db_user is None:
+        await credentials_exception()
+    return access_token

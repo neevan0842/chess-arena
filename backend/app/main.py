@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from app.api.v1.endpoints import auth, users, game
+from app.api.v1.endpoints import auth, users, game, ws
 from app.core.config import settings
 from app.core.redis_client import redis_client, is_redis_available
 
@@ -30,6 +30,7 @@ app.add_middleware(
 app.include_router(router=auth.router, prefix="/api/v1")
 app.include_router(router=users.router, prefix="/api/v1")
 app.include_router(router=game.router, prefix="/api/v1")
+app.include_router(router=ws.router, prefix="/api/v1")
 
 
 # Root route

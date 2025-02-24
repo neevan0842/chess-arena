@@ -1,8 +1,8 @@
 """game table added
 
-Revision ID: fcdd357e10a5
+Revision ID: 6c6903e4613f
 Revises: 694aa6ff4893
-Create Date: 2025-02-23 21:46:51.567157
+Create Date: 2025-02-24 11:36:43.921228
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'fcdd357e10a5'
+revision: str = '6c6903e4613f'
 down_revision: Union[str, None] = '694aa6ff4893'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -26,6 +26,7 @@ def upgrade() -> None:
     sa.Column('player_black_id', sa.String(length=36), nullable=True),
     sa.Column('fen', sa.String(), nullable=True),
     sa.Column('status', sa.String(), nullable=True),
+    sa.Column('winner', sa.String(), nullable=True),
     sa.Column('created_at', sa.TIMESTAMP(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
     sa.Column('updated_at', sa.TIMESTAMP(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
     sa.ForeignKeyConstraint(['player_black_id'], ['users.id'], ),

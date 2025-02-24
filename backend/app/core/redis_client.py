@@ -1,4 +1,4 @@
-from redis.asyncio import Redis
+from redis.asyncio import Redis, ConnectionError
 from app.core.config import settings
 
 redis_client = Redis(
@@ -7,3 +7,14 @@ redis_client = Redis(
     db=settings.REDIS_DB,
     decode_responses=True,
 )
+
+
+async def is_redis_available() -> bool:
+    """Check if connection to Redis is available."""
+    try:
+        await redis_client.ping()
+        print("Redis is available")
+        return True
+    except ConnectionError:
+        print("Redis is not available")
+        return False

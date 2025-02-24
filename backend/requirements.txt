@@ -6,3 +6,4 @@ python-jose[cryptography]
 passlib[bcrypt]
 requests
 redis[hiredis]
+chess

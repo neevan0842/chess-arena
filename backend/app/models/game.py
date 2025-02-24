@@ -1,7 +1,7 @@
 import uuid
 from sqlalchemy import TIMESTAMP, Column, Integer, String, ForeignKey, text
 from app.core.database import Base
-from app.core.constants import GameStatus
+from app.core.constants import GameStatus, Winner
 
 
 class Game(Base):
@@ -14,6 +14,7 @@ class Game(Base):
     fen = Column(String, default="startpos")  # Use FEN notation for board state
     # Status: waiting, ongoing, finished
     status = Column(String, default=GameStatus.WAITING)
+    winner = Column(String, default=Winner.ONGOING)
     created_at = Column(TIMESTAMP, server_default=text("CURRENT_TIMESTAMP"))
     updated_at = Column(
         TIMESTAMP,

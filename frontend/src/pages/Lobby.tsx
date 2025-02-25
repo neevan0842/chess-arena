@@ -78,11 +78,11 @@ const Lobby: React.FC = () => {
             <div className="w-full max-w-sm space-y-4">
               <div className="flex flex-col">
                 <label className="font-medium text-sm text-foreground mb-1">
-                  Enter Join Code
+                  Enter Game Code
                 </label>
                 <input
                   className="bg-input border border-border text-foreground rounded-md px-3 py-2 focus:ring-2 focus:ring-primary focus:outline-none transition"
-                  placeholder="e.g., 10001"
+                  placeholder="e.g. 10001"
                   value={joinCode}
                   onChange={(e) => setJoinCode(e.target.value)}
                 />

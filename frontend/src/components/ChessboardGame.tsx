@@ -1,7 +1,7 @@
 import useGameStore from "@/store/useGameStore";
 import { Player } from "@/utils/constants";
 import { Chess, Square } from "chess.js";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Chessboard } from "react-chessboard";
 
 interface ChessboardGameProps {
@@ -13,160 +13,128 @@ const ChessboardGame: React.FC<ChessboardGameProps> = ({
   handleMove,
   setNextMove,
 }) => {
-  const { fen, player } = useGameStore();
-  const initialGame = fen === "startpos" ? new Chess() : new Chess(fen);
-  const [game, setGame] = useState(initialGame);
-  const { updateFen } = useGameStore();
-  const [moveFrom, setMoveFrom] = useState("");
-  const [moveTo, setMoveTo] = useState<Square | null>(null);
-  const [rightClickedSquares, setRightClickedSquares] = useState({});
-  const [optionSquares, setOptionSquares] = useState({});
+  const { fen, player, updateFen } = useGameStore();
+  const [game, setGame] = useState(
+    new Chess(fen === "startpos" ? undefined : fen)
+  );
+  const [moveFrom, setMoveFrom] = useState<Square | null>(null);
+  const [optionSquares, setOptionSquares] = useState<Record<string, any>>({});
+  const [rightClickedSquares, setRightClickedSquares] = useState<
+    Record<string, any>
+  >({});
 
-  //Function to get possible move options from a given square.
-  function getMoveOptions(square: Square) {
-    // Retrieve all possible moves from the selected square, with detailed info.
-    const moves = game.moves({
-      square,
-      verbose: true,
-    });
-    // If no moves are available, clear optionSquares and return false.
-    if (moves.length === 0) {
-      setOptionSquares({});
-      return false;
-    }
-    // Create a new object to hold the style for each target square.
-    const newSquares: Record<string, any> = {};
-    moves.map((move) => {
-      // Set a different radial gradient background depending on whether the target
-      // square contains an opponent's piece or is empty.
-      newSquares[move.to] = {
-        background:
-          game.get(move.to) &&
-          game.get(move.to)?.color !== game.get(square)?.color
-            ? "radial-gradient(circle, rgba(0,0,0,.1) 85%, transparent 85%)"
-            : "radial-gradient(circle, rgba(0,0,0,.1) 25%, transparent 25%)",
-        borderRadius: "50%",
-      };
-      return move; // returning move is optional since we’re not using the result.
-    });
-    // Highlight the currently selected square.
-    newSquares[square] = {
-      background: "rgba(255, 255, 0, 0.4)",
-    };
-    // Update the state to reflect these option styles.
-    setOptionSquares(newSquares);
-    return true;
-  }
-
-  //Handler function for when a square on the board is clicked.
-  async function onSquareClick(square: Square) {
-    // Clear any right-click highlights.
-    setRightClickedSquares({});
-
-    // If no square has been selected as the starting point...
-    if (!moveFrom) {
-      // ensure that the clicked square contains a piece of the current player.
-      const piece = game.get(square);
-      const playerColor = player === Player.WHITE ? "w" : "b";
-      if (!piece || piece.color !== playerColor) {
-        return;
-      }
-      // Attempt to get move options from the clicked square.
-      const hasMoveOptions = getMoveOptions(square);
-      // If valid moves exist from that square, set it as the starting square.
-      if (hasMoveOptions) setMoveFrom(square);
-      return;
-    }
-
-    // If a starting square is already selected, this click should be the destination.
-    if (!moveTo) {
-      // Get possible moves from the previously selected starting square.
-      const moves = game.moves({
-        square: moveFrom as Square,
-        verbose: true,
-      });
-      // Find the move that matches the intended destination.
-      const foundMove = moves.find(
-        (m) => m.from === moveFrom && m.to === square
-      );
-      // If the move is not valid...
-      if (!foundMove) {
-        // Check if the newly clicked square can serve as a starting point.
-        const hasMoveOptions = getMoveOptions(square);
-        // If yes, update the starting square; if not, clear the selection.
-        setMoveFrom(hasMoveOptions ? square : "");
-        return;
-      }
-
-      // A valid destination square was selected.
-      setMoveTo(square);
-
-      // Determine if this move is a promotion move
-      const isPromotion =
-        (foundMove.color === "w" &&
-          foundMove.piece === "p" &&
-          square[1] === "8") ||
-        (foundMove.color === "b" &&
-          foundMove.piece === "p" &&
-          square[1] === "1");
-
-      // Process a move
-      // Make a copy of the current game.
-      const gameCopy = new Chess(game.fen());
-      const previousFen = gameCopy.fen();
-      // Attempt the move (defaulting promotion to queen).
-      const move = gameCopy.move({
-        from: moveFrom,
-        to: square,
-        promotion: "q",
-      });
-
-      // If the move is invalid, try updating the starting square instead.
-      if (move === null) {
-        const hasMoveOptions = getMoveOptions(square);
-        if (hasMoveOptions) setMoveFrom(square);
-        return;
-      }
-      // Update the game state with the valid move.
-      setGame(() => gameCopy);
-      updateFen(gameCopy.fen());
-      // Send the move to the server.
-      const moveString = `${moveFrom}${square}${isPromotion ? "=Q" : ""}`;
-      const response = await handleMove(moveString);
-      if (!response) {
-        // If the move failed, undo move
-        setGame(() => new Chess(previousFen));
-        updateFen(previousFen);
-      }
-
-      // Reset the move selections and clear move options.
-      setMoveFrom("");
-      setMoveTo(null);
-      setOptionSquares({});
-      return;
-    }
-  }
-
-  //Handler for right-click events on squares.
-  function onSquareRightClick(square: Square) {
-    const colour = "rgba(0, 0, 255, 0.4)";
-
-    setRightClickedSquares((prev) => ({
-      ...prev,
-      [square]:
-        (prev as any)[square]?.backgroundColor === colour
-          ? undefined
-          : { backgroundColor: colour },
-    }));
-  }
-
-  useEffect(() => {
-    setGame(() => (fen === "startpos" ? new Chess() : new Chess(fen)));
-  }, [fen, setGame]);
-
+  /**
+   * Updates the player's turn state
+   */
   useEffect(() => {
     setNextMove(game.turn() === "w" ? Player.WHITE : Player.BLACK);
   }, [game, setNextMove]);
+
+  /**
+   * Resets the board state whenever FEN updates
+   */
+  useEffect(() => {
+    setGame(new Chess(fen === "startpos" ? undefined : fen));
+  }, [fen]);
+
+  /**
+   * Highlights available moves for the selected piece
+   */
+  const getMoveOptions = useCallback(
+    (square: Square) => {
+      const moves = game.moves({ square, verbose: true });
+      if (!moves.length) {
+        setOptionSquares({});
+        return false;
+      }
+
+      const newSquares: Record<string, any> = {};
+      moves.forEach((move) => {
+        newSquares[move.to] = {
+          background:
+            game.get(move.to) &&
+            game.get(move.to)?.color !== game.get(square)?.color
+              ? "radial-gradient(circle, rgba(0,0,0,.1) 85%, transparent 85%)"
+              : "radial-gradient(circle, rgba(0,0,0,.1) 25%, transparent 25%)",
+          borderRadius: "50%",
+        };
+      });
+
+      newSquares[square] = { background: "rgba(255, 255, 0, 0.4)" };
+      setOptionSquares(newSquares);
+      return true;
+    },
+    [game]
+  );
+
+  /**
+   * Handles move logic when a square is clicked
+   */
+  const onSquareClick = async (square: Square) => {
+    setRightClickedSquares({});
+
+    // If no starting square is selected
+    if (!moveFrom) {
+      const piece = game.get(square);
+      if (!piece || piece.color !== (player === Player.WHITE ? "w" : "b"))
+        return;
+
+      if (getMoveOptions(square)) setMoveFrom(square);
+      return;
+    }
+
+    // If move destination is selected
+    const moves = game.moves({ square: moveFrom, verbose: true });
+    const foundMove = moves.find((m) => m.from === moveFrom && m.to === square);
+
+    if (!foundMove) {
+      if (getMoveOptions(square)) setMoveFrom(square);
+      return;
+    }
+
+    const gameCopy = new Chess(game.fen());
+    const previousFen = gameCopy.fen();
+    const move = gameCopy.move({
+      from: moveFrom,
+      to: square,
+      promotion: "q",
+    });
+
+    if (!move) {
+      if (getMoveOptions(square)) setMoveFrom(square);
+      return;
+    }
+
+    setGame(gameCopy);
+    updateFen(gameCopy.fen());
+
+    const moveString = `${moveFrom}${square}${
+      foundMove.flags.includes("p") ? "=Q" : ""
+    }`;
+    const response = await handleMove(moveString);
+
+    if (!response) {
+      setGame(new Chess(previousFen));
+      updateFen(previousFen);
+    }
+
+    setMoveFrom(null);
+    setOptionSquares({});
+  };
+
+  /**
+   * Handles right-click events to mark squares
+   */
+  const onSquareRightClick = (square: Square) => {
+    const highlightColor = "rgba(0, 0, 255, 0.4)";
+    setRightClickedSquares((prev) => ({
+      ...prev,
+      [square]:
+        prev[square]?.backgroundColor === highlightColor
+          ? undefined
+          : { backgroundColor: highlightColor },
+    }));
+  };
 
   return (
     <div className="w-96">
@@ -185,7 +153,6 @@ const ChessboardGame: React.FC<ChessboardGameProps> = ({
           ...optionSquares,
           ...rightClickedSquares,
         }}
-        promotionToSquare={moveTo}
       />
     </div>
   );

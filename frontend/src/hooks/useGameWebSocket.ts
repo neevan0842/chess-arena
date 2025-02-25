@@ -1,13 +1,12 @@
 import useAuthStore from "@/store/useAuthStore";
 import useGameStore from "@/store/useGameStore";
+import useResultStore from "@/store/useResultStore";
 import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
-import { useNavigate } from "react-router";
 
 export const useGameWebSocket = () => {
-  const { gameId, updateGame, resetGame } = useGameStore();
+  const { gameId, updateGame } = useGameStore();
+  const { setShowModel, setWinner } = useResultStore();
   const [ws, setWs] = useState<WebSocket | null>(null);
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (gameId) {
@@ -31,11 +30,8 @@ export const useGameWebSocket = () => {
           if (data.type === "move") {
             updateGame(data.fen, data.status, data.winner);
           } else if (data.type === "resign") {
-            toast.success(`Game Over! ${data.winner} won the game`);
-            setTimeout(() => {
-              navigate("/");
-              resetGame();
-            }, 2000);
+            setShowModel(true);
+            setWinner(data.winner);
           }
         } catch (err) {
           console.error("Error parsing WebSocket message:", err);

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router";
 import ChessboardGame from "./ChessboardGame";
+import ResultModel from "./ResultModel";
 
 const MultiplayerGame = () => {
   const navigate = useNavigate();
@@ -58,6 +59,9 @@ const MultiplayerGame = () => {
         >
           Resign
         </button>
+      </div>
+      <div>
+        <ResultModel />
       </div>
     </div>
   );

@@ -1,12 +1,13 @@
+import { Winner } from "@/utils/constants";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 
 interface ResultState {
   showModel: boolean;
-  winner: "white" | "black" | "draw" | null;
+  winner: Winner | null;
   setShowModel: (showModel: boolean) => void;
-  setWinner: (winner: "white" | "black" | "draw") => void;
+  setWinner: (winner: Winner) => void;
   resetResult: () => void;
 }
 

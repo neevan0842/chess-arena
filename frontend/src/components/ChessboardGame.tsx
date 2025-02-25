@@ -1,11 +1,12 @@
 import useGameStore from "@/store/useGameStore";
+import { Player } from "@/utils/constants";
 import { Chess, Square } from "chess.js";
 import { useEffect, useState } from "react";
 import { Chessboard } from "react-chessboard";
 
 interface ChessboardGameProps {
   handleMove: (move: string) => Promise<boolean>;
-  setNextMove: (nextMove: "white" | "black") => void;
+  setNextMove: (nextMove: Player) => void;
 }
 
 const ChessboardGame: React.FC<ChessboardGameProps> = ({
@@ -66,7 +67,7 @@ const ChessboardGame: React.FC<ChessboardGameProps> = ({
     if (!moveFrom) {
       // ensure that the clicked square contains a piece of the current player.
       const piece = game.get(square);
-      const playerColor = player === "white" ? "w" : "b";
+      const playerColor = player === Player.WHITE ? "w" : "b";
       if (!piece || piece.color !== playerColor) {
         return;
       }
@@ -164,7 +165,7 @@ const ChessboardGame: React.FC<ChessboardGameProps> = ({
   }, [fen, setGame]);
 
   useEffect(() => {
-    setNextMove(game.turn() === "w" ? "white" : "black");
+    setNextMove(game.turn() === "w" ? Player.WHITE : Player.BLACK);
   }, [game, setNextMove]);
 
   return (

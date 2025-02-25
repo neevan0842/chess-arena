@@ -1,5 +1,6 @@
 import useGameStore from "@/store/useGameStore";
 import useResultStore from "@/store/useResultStore";
+import { Winner } from "@/utils/constants";
 import { useNavigate } from "react-router";
 
 const ResultModel = () => {
@@ -19,7 +20,7 @@ const ResultModel = () => {
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white p-8 rounded shadow-md text-center">
             <h2 className="text-2xl font-bold mb-4">
-              {winner && winner === "draw"
+              {winner && winner === Winner.DRAW
                 ? "It's a Draw!"
                 : winner !== player
                 ? "You Lost"
@@ -28,7 +29,7 @@ const ResultModel = () => {
             <p className="mb-4">
               Game Over!{" "}
               {winner &&
-                (winner === "draw"
+                (winner === Winner.DRAW
                   ? "The game ended in a draw."
                   : `${
                       winner.charAt(0).toUpperCase() + winner.slice(1)

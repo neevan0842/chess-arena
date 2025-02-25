@@ -6,10 +6,11 @@ import toast from "react-hot-toast";
 import { useNavigate } from "react-router";
 import ChessboardGame from "./ChessboardGame";
 import ResultModel from "./ResultModel";
+import { Player } from "@/utils/constants";
 
 const MultiplayerGame = () => {
   const navigate = useNavigate();
-  const [nextMove, setNextMove] = useState("w");
+  const [nextMove, setNextMove] = useState(Player.WHITE);
   const { gameId, player } = useGameStore();
 
   useGameWebSocket();
@@ -57,10 +58,7 @@ const MultiplayerGame = () => {
             You are playing as <span className="font-medium">{player}</span>
           </p>
           <p className="text-lg text-gray-700">
-            Next move:{" "}
-            <span className="font-medium">
-              {nextMove === "w" ? "White" : "Black"}
-            </span>
+            Next move :<span className="font-medium">{` ${nextMove}`}</span>
           </p>
         </div>
 

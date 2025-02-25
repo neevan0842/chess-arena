@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import useGameStore from "@/store/useGameStore";
 import { createGame, joinGame } from "@/api/gameApi";
 import toast from "react-hot-toast";
+import { Player } from "@/utils/constants";
 
 const Lobby: React.FC = () => {
   const { setGame, resetGame } = useGameStore();
@@ -18,7 +19,7 @@ const Lobby: React.FC = () => {
         return;
       }
       resetGame();
-      setGame(data.id, data.fen, data.status, "white");
+      setGame(data.id, data.fen, data.status, Player.WHITE);
       navigate("/multiplayer");
     } catch (error) {
       toast.error("Failed to create game");
@@ -34,7 +35,7 @@ const Lobby: React.FC = () => {
         return;
       }
       resetGame();
-      setGame(data.id, data.fen, data.status, "black");
+      setGame(data.id, data.fen, data.status, Player.BLACK);
       navigate("/multiplayer");
     } catch (error) {
       toast.error("Failed to join game");

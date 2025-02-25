@@ -2,6 +2,7 @@ import useAuthStore from "@/store/useAuthStore";
 import useGameStore from "@/store/useGameStore";
 import useResultStore from "@/store/useResultStore";
 import { useEffect, useState } from "react";
+import { GameStatus, WebSocketMessageType } from "../utils/constants";
 
 export const useGameWebSocket = () => {
   const { gameId, updateGame } = useGameStore();
@@ -27,15 +28,15 @@ export const useGameWebSocket = () => {
       socket.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          if (data.type === "move") {
-            updateGame(data.fen, data.status, data.winner);
-            if (data.status === "finished") {
+          if (data.type === WebSocketMessageType.MOVE) {
+            updateGame(data.fen, data.status);
+            if (data.status === GameStatus.FINISHED) {
               setTimeout(() => {
                 setShowModel(true);
                 setWinner(data.winner);
               }, 1000);
             }
-          } else if (data.type === "resign") {
+          } else if (data.type === WebSocketMessageType.RESIGN) {
             setShowModel(true);
             setWinner(data.winner);
           }

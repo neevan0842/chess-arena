@@ -82,10 +82,7 @@ const Home = () => {
             >
               Play with Bot
             </Button>
-            <Button
-              variant="customWhite"
-              onClick={() => navigate("/play-vs-player")}
-            >
+            <Button variant="customWhite" onClick={() => navigate("/lobby")}>
               Play with Others
             </Button>
           </div>

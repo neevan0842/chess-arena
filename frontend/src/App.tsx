@@ -5,8 +5,9 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
-import Chess from "./pages/Chess";
 import GoogleCallback from "./components/GoogleCallback";
+import Lobby from "./pages/Lobby";
+import MultiplayerGame from "./components/MultiplayerGame";
 
 const App = () => {
   return (
@@ -19,7 +20,8 @@ const App = () => {
 
         {/* Protected routes */}
         <Route element={<ProtectedRoute />}>
-          <Route path="/chess" element={<Chess />} />
+          <Route path="/lobby" element={<Lobby />} />
+          <Route path="/multiplayer" element={<MultiplayerGame />} />
         </Route>
 
         {/* Google OAuth callback route */}

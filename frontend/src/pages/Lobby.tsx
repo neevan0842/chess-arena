@@ -18,7 +18,7 @@ const Lobby: React.FC = () => {
         return;
       }
       resetGame();
-      setGame(data.id, data.fen, data.status);
+      setGame(data.id, data.fen, data.status, "white");
       navigate("/multiplayer");
     } catch (error) {
       toast.error("Failed to create game");
@@ -34,7 +34,7 @@ const Lobby: React.FC = () => {
         return;
       }
       resetGame();
-      setGame(data.id, data.fen, data.status);
+      setGame(data.id, data.fen, data.status, "black");
       navigate("/multiplayer");
     } catch (error) {
       toast.error("Failed to join game");

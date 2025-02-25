@@ -1,17 +1,20 @@
 import useGameStore from "@/store/useGameStore";
 import { Chess, Square } from "chess.js";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Chessboard } from "react-chessboard";
 
 interface ChessboardGameProps {
-  game: Chess;
   handleMove: (move: string) => Promise<boolean>;
+  setNextMove: (nextMove: "white" | "black") => void;
 }
 
 const ChessboardGame: React.FC<ChessboardGameProps> = ({
-  game,
   handleMove,
+  setNextMove,
 }) => {
+  const { fen, player } = useGameStore();
+  const initialGame = fen === "startpos" ? new Chess() : new Chess(fen);
+  const [game, setGame] = useState(initialGame);
   const { updateFen } = useGameStore();
   const [moveFrom, setMoveFrom] = useState("");
   const [moveTo, setMoveTo] = useState<Square | null>(null);
@@ -61,6 +64,12 @@ const ChessboardGame: React.FC<ChessboardGameProps> = ({
 
     // If no square has been selected as the starting point...
     if (!moveFrom) {
+      // ensure that the clicked square contains a piece of the current player.
+      const piece = game.get(square);
+      const playerColor = player === "white" ? "w" : "b";
+      if (!piece || piece.color !== playerColor) {
+        return;
+      }
       // Attempt to get move options from the clicked square.
       const hasMoveOptions = getMoveOptions(square);
       // If valid moves exist from that square, set it as the starting square.
@@ -118,13 +127,14 @@ const ChessboardGame: React.FC<ChessboardGameProps> = ({
         return;
       }
       // Update the game state with the valid move.
-      // setGame(gameCopy);
+      setGame(() => gameCopy);
       updateFen(gameCopy.fen());
       // Send the move to the server.
       const moveString = `${moveFrom}${square}${isPromotion ? "=Q" : ""}`;
       const response = await handleMove(moveString);
       if (!response) {
         // If the move failed, undo move
+        setGame(() => new Chess(previousFen));
         updateFen(previousFen);
       }
 
@@ -149,10 +159,16 @@ const ChessboardGame: React.FC<ChessboardGameProps> = ({
     }));
   }
 
+  useEffect(() => {
+    setGame(() => (fen === "startpos" ? new Chess() : new Chess(fen)));
+  }, [fen, setGame]);
+
+  useEffect(() => {
+    setNextMove(game.turn() === "w" ? "white" : "black");
+  }, [game, setNextMove]);
+
   return (
     <div className="w-96">
-      {/* <h1 className="">hello</h1> */}
-      {/* <Chessboard position={game.fen()} /> */}
       <Chessboard
         id="ClickToMove"
         animationDuration={200}

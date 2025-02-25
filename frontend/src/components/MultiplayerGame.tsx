@@ -49,9 +49,21 @@ const MultiplayerGame = () => {
   return (
     <div className="flex justify-center items-center h-screen bg-orange-200">
       <div className="">
-        <h1 className="mb-4">{`Chess Game : ${gameId}`}</h1>
-        <h2 className="mb-4">{`You are playing as ${player}`}</h2>
-        <h2 className="mb-4">{`next move - ${nextMove}`}</h2>
+        <div className="text-center mb-4">
+          <h1 className="text-2xl font-semibold">
+            Game Code: <span className="font-mono">{gameId}</span>
+          </h1>
+          <p className="text-lg text-gray-700">
+            You are playing as <span className="font-medium">{player}</span>
+          </p>
+          <p className="text-lg text-gray-700">
+            Next move:{" "}
+            <span className="font-medium">
+              {nextMove === "w" ? "White" : "Black"}
+            </span>
+          </p>
+        </div>
+
         <ChessboardGame handleMove={handleMove} setNextMove={setNextMove} />
         <button
           onClick={handleResign}

@@ -5,7 +5,7 @@ import { createGame, joinGame } from "@/api/gameApi";
 import toast from "react-hot-toast";
 
 const Lobby: React.FC = () => {
-  const { setGame } = useGameStore();
+  const { setGame, resetGame } = useGameStore();
   const [joinCode, setJoinCode] = useState("");
   const navigate = useNavigate();
 
@@ -17,6 +17,7 @@ const Lobby: React.FC = () => {
         toast.error("Failed to create game");
         return;
       }
+      resetGame();
       setGame(data.id, data.fen, data.status);
       navigate("/multiplayer");
     } catch (error) {
@@ -32,6 +33,7 @@ const Lobby: React.FC = () => {
         toast.error("Invalid join code");
         return;
       }
+      resetGame();
       setGame(data.id, data.fen, data.status);
       navigate("/multiplayer");
     } catch (error) {

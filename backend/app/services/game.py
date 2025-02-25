@@ -13,6 +13,11 @@ def join_existing_game_multiplayer(game_id: int, db: Session, player_id: str):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Game not found"
         )
+    if game.status == GameStatus.ONGOING and player_id in (
+        game.player_white_id,
+        game.player_black_id,
+    ):
+        return game
     if game.player_white_id == player_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

@@ -4,9 +4,9 @@ import { immer } from "zustand/middleware/immer";
 
 interface ResultState {
   showModel: boolean;
-  winner: "white" | "black" | null;
+  winner: "white" | "black" | "draw" | null;
   setShowModel: (showModel: boolean) => void;
-  setWinner: (winner: "white" | "black") => void;
+  setWinner: (winner: "white" | "black" | "draw") => void;
   resetResult: () => void;
 }
 

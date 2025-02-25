@@ -29,6 +29,12 @@ export const useGameWebSocket = () => {
           const data = JSON.parse(event.data);
           if (data.type === "move") {
             updateGame(data.fen, data.status, data.winner);
+            if (data.status === "finished") {
+              setTimeout(() => {
+                setShowModel(true);
+                setWinner(data.winner);
+              }, 1000);
+            }
           } else if (data.type === "resign") {
             setShowModel(true);
             setWinner(data.winner);

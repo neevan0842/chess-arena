@@ -19,14 +19,20 @@ const ResultModel = () => {
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white p-8 rounded shadow-md text-center">
             <h2 className="text-2xl font-bold mb-4">
-              {winner !== player ? "You Lost" : "You Won"}
+              {winner && winner === "draw"
+                ? "It's a Draw!"
+                : winner !== player
+                ? "You Lost"
+                : "You Won"}
             </h2>
             <p className="mb-4">
-              Game Over!
+              Game Over!{" "}
               {winner &&
-                `  ${
-                  winner.charAt(0).toUpperCase() + winner.slice(1)
-                } won the game.`}
+                (winner === "draw"
+                  ? "The game ended in a draw."
+                  : `${
+                      winner.charAt(0).toUpperCase() + winner.slice(1)
+                    } won the game.`)}
             </p>
             <button
               onClick={handleExit}

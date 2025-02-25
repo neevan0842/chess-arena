@@ -5,6 +5,10 @@ __pycache__/
 
 *.db
 
+# env
+.env
+.env.docker
+
 # C extensions
 *.so
 

@@ -1,27 +1,31 @@
 services:
+  redis:
+    image: redis:8.0-M03-alpine
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
   backend:
-    # Build the backend image using the Dockerfile for your FastAPI app.
     build:
       context: ./backend
     ports:
-      - "8000:8000" # Expose port 8000 for FastAPI
+      - "8000:8000"
     volumes:
-      - ./backend:/code # Mount the entire project directory for live updates
-    # environment:
-    # - ENV=development # Set environment variables as needed
-    # Run Alembic migrations first, then start FastAPI in development mode.
+      - ./backend:/code
+    env_file:
+      - ./backend/.env.docker
+    depends_on:
+      - redis
     command: sh -c "alembic upgrade head && fastapi dev --host 0.0.0.0 --port 8000"
+    restart: unless-stopped
 
   frontend:
-    # Build the frontend image using the Dockerfile for your Vite–React app.
     build:
       context: ./frontend
     ports:
-      - "5173:5173" # Expose port 5173 for Vite dev server
+      - "5173:5173"
     volumes:
-      - ./frontend:/app # Mount the project directory for hot-reloading
-      - /app/node_modules # Keep node_modules from the image intact
-    # environment:
-    #   - NODE_ENV=development
-    # Run Vite's dev server and bind to all interfaces
+      - ./frontend:/app
+      - /app/node_modules
     command: bun run dev --host
+    restart: unless-stopped

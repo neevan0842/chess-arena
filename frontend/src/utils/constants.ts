@@ -19,3 +19,9 @@ export enum WebSocketMessageType {
   RESIGN = "resign",
   MOVE = "move",
 }
+
+export enum AIDifficulty {
+  EASY = "easy",
+  MEDIUM = "medium",
+  HARD = "hard",
+}

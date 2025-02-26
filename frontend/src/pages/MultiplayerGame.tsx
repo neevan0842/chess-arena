@@ -4,8 +4,8 @@ import useGameStore from "@/store/useGameStore";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router";
-import ChessboardGame from "./ChessboardGame";
-import ResultModel from "./ResultModel";
+import ChessboardGame from "../components/ChessboardGame";
+import ResultModel from "../components/ResultModel";
 import { Player } from "@/utils/constants";
 
 const MultiplayerGame = () => {

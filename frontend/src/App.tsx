@@ -7,7 +7,8 @@ import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import GoogleCallback from "./components/GoogleCallback";
 import Lobby from "./pages/Lobby";
-import MultiplayerGame from "./components/MultiplayerGame";
+import MultiplayerGame from "./pages/MultiplayerGame";
+import AIGame from "./pages/AIGame";
 
 const App = () => {
   return (
@@ -22,6 +23,7 @@ const App = () => {
         <Route element={<ProtectedRoute />}>
           <Route path="/lobby" element={<Lobby />} />
           <Route path="/multiplayer" element={<MultiplayerGame />} />
+          <Route path="/ai" element={<AIGame />} />
         </Route>
 
         {/* Google OAuth callback route */}

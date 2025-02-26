@@ -8,6 +8,7 @@ const Home = () => {
   const navigate = useNavigate();
   const [authorised, setAuthorised] = useState(false);
   const { logout } = useAuthStore();
+
   const handleLogout = async () => {
     await logout();
     if (!useAuthStore.getState().isLoggedIn) {
@@ -18,6 +19,7 @@ const Home = () => {
       toast.error("Logout failed");
     }
   };
+
   useEffect(() => {
     setAuthorised(() => useAuthStore.getState().isLoggedIn);
   }, []);
@@ -76,10 +78,7 @@ const Home = () => {
           </p>
 
           <div className="flex flex-col md:flex-row items-center justify-center gap-4">
-            <Button
-              variant="customWhite"
-              onClick={() => navigate("/play-vs-bot")}
-            >
+            <Button variant="customWhite" onClick={() => navigate("/ai")}>
               Play with Bot
             </Button>
             <Button variant="customWhite" onClick={() => navigate("/lobby")}>

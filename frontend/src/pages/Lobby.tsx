@@ -4,9 +4,11 @@ import useGameStore from "@/store/useGameStore";
 import { createGame, joinGame } from "@/api/gameApi";
 import toast from "react-hot-toast";
 import { Player } from "@/utils/constants";
+import useResultStore from "@/store/useResultStore";
 
 const Lobby: React.FC = () => {
   const { setGame, resetGame } = useGameStore();
+  const { resetResult } = useResultStore();
   const [joinCode, setJoinCode] = useState("");
   const navigate = useNavigate();
 
@@ -19,6 +21,7 @@ const Lobby: React.FC = () => {
         return;
       }
       resetGame();
+      resetResult();
       setGame(data.id, data.fen, data.status, Player.WHITE);
       navigate("/multiplayer");
     } catch (error) {
@@ -35,6 +38,7 @@ const Lobby: React.FC = () => {
         return;
       }
       resetGame();
+      resetResult();
       setGame(data.id, data.fen, data.status, Player.BLACK);
       navigate("/multiplayer");
     } catch (error) {

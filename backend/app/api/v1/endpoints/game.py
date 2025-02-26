@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from redis.asyncio import Redis
 from sqlalchemy.orm import Session
 from app.schemas.game import GameResponse, JoinRequest, MoveRequest, MoveResponse
@@ -6,7 +6,7 @@ from app.dependencies import get_db, get_redis_client
 from app.models.user import User
 from app.services.auth import get_current_active_user
 from app.models.game import Game
-from app.core.constants import GameStatus, Winner
+from app.core.constants import GameType
 from app.services.game import (
     join_existing_game_multiplayer,
     publish_move,
@@ -25,7 +25,7 @@ router = APIRouter(prefix="/game", tags=["game"])
 async def create_game(
     db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)
 ):
-    game = Game(player_white_id=current_user.id)
+    game = Game(player_white_id=current_user.id, game_type=GameType.MULTIPLAYER)
     db.add(game)
     db.commit()
     db.refresh(game)

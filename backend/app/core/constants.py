@@ -7,6 +7,11 @@ class GameStatus(str, Enum):
     FINISHED = "finished"
 
 
+class GameType(str, Enum):
+    MULTIPLAYER = "multiplayer"
+    AI = "ai"
+
+
 class Winner(str, Enum):
     WHITE = "white"
     BLACK = "black"

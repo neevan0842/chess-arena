@@ -1,4 +1,6 @@
 from contextlib import asynccontextmanager
+import chess
+import chess.engine
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -7,15 +9,20 @@ from app.core.config import settings
 from app.core.redis_client import redis_client, is_redis_available
 
 FRONTEND_URLS = settings.FRONTEND_URLS
+STOCKFISH_PATH = settings.STOCKFISH_PATH
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await is_redis_available()
+    transport, engine = await chess.engine.popen_uci(STOCKFISH_PATH)
+    app.state.engine = engine
     try:
         yield
     finally:
         await redis_client.close()
+        await engine.quit()
+        await transport.close()
 
 
 app = FastAPI(lifespan=lifespan, debug=True)

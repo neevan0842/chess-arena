@@ -1,11 +1,10 @@
 import chess.engine
-from fastapi import HTTPException, status
+from fastapi import HTTPException, Request, status
 from redis.asyncio import Redis
 from sqlalchemy.orm import Session
 from app.models.game import Game
 from app.core.constants import AIDifficulty, GameStatus, GameType, Winner
 from app.core.config import settings
-from app.utils.chessAi import ChessAIEngine
 import chess
 import json
 
@@ -123,10 +122,7 @@ def validate_and_update_move_multiplayer(
 
 
 async def validate_and_update_move_ai(
-    game_id: int,
-    move: str,
-    player_id: str,
-    db: Session,
+    game_id: int, move: str, player_id: str, db: Session, request: Request
 ):
     game = (
         db.query(Game).filter(Game.id == game_id, Game.game_type == GameType.AI).first()
@@ -197,10 +193,11 @@ async def validate_and_update_move_ai(
         if game.ai_difficulty == AIDifficulty.EASY
         else 12 if game.ai_difficulty == AIDifficulty.MEDIUM else 20
     )
-    engine = ChessAIEngine(difficulty=ai_difficulty)
+    engine = request.app.state.engine
+    await engine.configure({"Skill Level": ai_difficulty})
 
-    ai_move = engine.get_ai_move(board=board)
-    board.push(ai_move)
+    ai_move = await engine.play(board, chess.engine.Limit(time=0.5))
+    board.push(ai_move.move)
     game.fen = board.fen()
 
     # Update game status if checkmate, draw, or stalemate is reached.

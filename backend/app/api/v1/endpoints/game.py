@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 from redis.asyncio import Redis
 from sqlalchemy.orm import Session
 from app.schemas.game import (
@@ -107,6 +107,7 @@ async def create_game_ai(
 @router.post("/ai/move")
 async def make_move_ai(
     payload: MoveRequest,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -115,6 +116,7 @@ async def make_move_ai(
         move=payload.move,
         player_id=current_user.id,
         db=db,
+        request=request,
     )
     return MoveResponse(fen=game.fen, status=game.status, winner=game.winner)
 

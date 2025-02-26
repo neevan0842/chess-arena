@@ -2,7 +2,7 @@
 FROM oven/bun:latest
 
 # Set the working directory
-WORKDIR /app
+WORKDIR /code
 
 # Copy dependency manifests for caching
 COPY package.json bun.lock ./

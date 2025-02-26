@@ -23,7 +23,7 @@ services:
     build:
       context: ./frontend
     ports:
-      - "5173:5173"
+      - "3000:5173" # change 3000 to 5173 for working with the backend
     volumes:
       - ./frontend:/app
       - /app/node_modules

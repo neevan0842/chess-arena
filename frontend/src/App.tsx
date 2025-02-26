@@ -9,6 +9,7 @@ import GoogleCallback from "./components/GoogleCallback";
 import Lobby from "./pages/Lobby";
 import MultiplayerGame from "./pages/MultiplayerGame";
 import AIGame from "./pages/AIGame";
+import LobbyAI from "./pages/LobbyAI";
 
 const App = () => {
   return (
@@ -23,6 +24,7 @@ const App = () => {
         <Route element={<ProtectedRoute />}>
           <Route path="/lobby" element={<Lobby />} />
           <Route path="/multiplayer" element={<MultiplayerGame />} />
+          <Route path="/lobbyai" element={<LobbyAI />} />
           <Route path="/ai" element={<AIGame />} />
         </Route>
 

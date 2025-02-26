@@ -168,6 +168,7 @@ const ChessboardGame: React.FC<ChessboardGameProps> = ({
           ...optionSquares,
           ...rightClickedSquares,
         }}
+        boardOrientation={player === Player.BLACK ? "black" : "white"}
       />
     </div>
   );

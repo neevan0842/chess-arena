@@ -10,6 +10,8 @@ services:
       context: ./backend
     ports:
       - "8000:8000"
+    volumes:
+      - ./backend/app.db:/code/app.db
     develop:
       watch:
         - action: sync+restart

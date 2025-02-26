@@ -13,11 +13,10 @@ from app.dependencies import get_db, get_redis_client
 from app.models.user import User
 from app.services.auth import get_current_active_user
 from app.models.game import Game
-from app.core.constants import GameStatus, GameType
+from app.core.constants import GameStatus, GameType, RedisPublishType
 from app.services.game import (
     join_existing_game_multiplayer,
-    publish_move,
-    publish_resign,
+    publish_redis,
     resign_ai_game,
     resign_game_multiplayer,
     validate_and_update_move_ai,
@@ -46,9 +45,13 @@ async def join_game(
     payload: JoinRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
+    redis_client: Redis = Depends(get_redis_client),
 ):
     game: Game = join_existing_game_multiplayer(
         game_id=payload.game_id, db=db, player_id=current_user.id
+    )
+    await publish_redis(
+        game=game, type=RedisPublishType.JOIN, redis_client=redis_client
     )
     return game
 
@@ -63,7 +66,9 @@ async def make_move(
     game = validate_and_update_move_multiplayer(
         payload.game_id, payload.move, current_user.id, db
     )
-    publish_move(game=game, redis_client=redis_client)
+    await publish_redis(
+        game=game, type=RedisPublishType.MOVE, redis_client=redis_client
+    )
     return MoveResponse(fen=game.fen, status=game.status, winner=game.winner)
 
 
@@ -78,8 +83,9 @@ async def resign_game(
         game_id=payload.game_id, db=db, player_id=current_user.id
     )
 
-    await publish_resign(game, redis_client)
-
+    await publish_redis(
+        game=game, type=RedisPublishType.RESIGN, redis_client=redis_client
+    )
     return MoveResponse(fen=game.fen, status=game.status, winner=game.winner)
 
 

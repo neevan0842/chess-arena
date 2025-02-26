@@ -3,6 +3,7 @@ import useGameStore from "@/store/useGameStore";
 import useResultStore from "@/store/useResultStore";
 import { useEffect, useState } from "react";
 import { GameStatus, WebSocketMessageType } from "../utils/constants";
+import toast from "react-hot-toast";
 
 export const useGameWebSocket = () => {
   const { gameId, updateGame } = useGameStore();
@@ -39,6 +40,9 @@ export const useGameWebSocket = () => {
           } else if (data.type === WebSocketMessageType.RESIGN) {
             setShowModel(true);
             setWinner(data.winner);
+          } else if (data.type === WebSocketMessageType.JOIN) {
+            toast.success("Opponent joined the game");
+            updateGame(data.fen, data.status);
           }
         } catch (err) {
           console.error("Error parsing WebSocket message:", err);

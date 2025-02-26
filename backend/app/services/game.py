@@ -3,7 +3,13 @@ from fastapi import HTTPException, Request, status
 from redis.asyncio import Redis
 from sqlalchemy.orm import Session
 from app.models.game import Game
-from app.core.constants import AIDifficulty, GameStatus, GameType, Winner
+from app.core.constants import (
+    AIDifficulty,
+    GameStatus,
+    GameType,
+    RedisPublishType,
+    Winner,
+)
 from app.core.config import settings
 import chess
 import json
@@ -118,7 +124,7 @@ def validate_and_update_move_multiplayer(
     db.commit()
     db.refresh(game)
 
-    return game, board.turn
+    return game
 
 
 async def validate_and_update_move_ai(
@@ -276,9 +282,9 @@ def resign_ai_game(game_id: int, db: Session, player_id: str):
     return game
 
 
-async def publish_move(game: Game, redis_client: Redis):
+async def publish_redis(game: Game, type: RedisPublishType, redis_client: Redis):
     payload = {
-        "type": "move",
+        "type": type,
         "game_id": game.id,
         "fen": game.fen,
         "status": game.status,
@@ -286,19 +292,7 @@ async def publish_move(game: Game, redis_client: Redis):
     }
     try:
         await redis_client.publish(f"game_{game.id}", json.dumps(payload))
-    except Exception:
-        raise HTTPException(status_code=500, detail="Failed to publish move")
-
-
-async def publish_resign(game: Game, redis_client: Redis):
-    payload = {
-        "type": "resign",
-        "game_id": game.id,
-        "fen": game.fen,
-        "status": game.status,
-        "winner": game.winner,
-    }
-    try:
-        await redis_client.publish(f"game_{game.id}", json.dumps(payload))
-    except Exception:
-        raise HTTPException(status_code=500, detail="Failed to publish move")
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to publish move to Redis: {e}"
+        )

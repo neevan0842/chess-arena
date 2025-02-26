@@ -18,6 +18,7 @@ export enum Player {
 export enum WebSocketMessageType {
   RESIGN = "resign",
   MOVE = "move",
+  JOIN = "join",
 }
 
 export enum AIDifficulty {

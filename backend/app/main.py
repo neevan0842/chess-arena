@@ -22,7 +22,6 @@ async def lifespan(app: FastAPI):
     finally:
         await redis_client.close()
         await engine.quit()
-        await transport.close()
 
 
 app = FastAPI(lifespan=lifespan, debug=True)

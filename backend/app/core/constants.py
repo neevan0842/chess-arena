@@ -24,3 +24,9 @@ class AIDifficulty(str, Enum):
     EASY = "easy"
     MEDIUM = "medium"
     HARD = "hard"
+
+
+class RedisPublishType(str, Enum):
+    MOVE = "move"
+    RESIGN = "resign"
+    JOIN = "join"

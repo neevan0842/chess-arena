@@ -1,8 +1,9 @@
 import useGameStore from "@/store/useGameStore";
-import { Player } from "@/utils/constants";
+import { GameStatus, Player } from "@/utils/constants";
 import { Chess, Square } from "chess.js";
 import { useEffect, useState, useCallback } from "react";
 import { Chessboard } from "react-chessboard";
+import toast from "react-hot-toast";
 
 interface ChessboardGameProps {
   handleMove: (move: string) => Promise<boolean>;
@@ -13,7 +14,7 @@ const ChessboardGame: React.FC<ChessboardGameProps> = ({
   handleMove,
   setNextMove,
 }) => {
-  const { fen, player, updateFen } = useGameStore();
+  const { fen, player, status, updateFen } = useGameStore();
   const [game, setGame] = useState(
     new Chess(fen === "startpos" ? undefined : fen)
   );
@@ -36,6 +37,15 @@ const ChessboardGame: React.FC<ChessboardGameProps> = ({
   useEffect(() => {
     setGame(new Chess(fen === "startpos" ? undefined : fen));
   }, [fen]);
+
+  // useEffect will check for check status after every move
+  useEffect(() => {
+    if (game.inCheck()) {
+      toast(`Check! ${game.turn() === "w" ? "White" : "Black"} is in check!`, {
+        icon: "⚠️",
+      });
+    }
+  }, [game.fen()]); // Runs when FEN (game state) changes
 
   /**
    * Highlights available moves for the selected piece
@@ -72,6 +82,11 @@ const ChessboardGame: React.FC<ChessboardGameProps> = ({
    */
   const onSquareClick = async (square: Square) => {
     setRightClickedSquares({});
+
+    if (status === GameStatus.WAITING) {
+      toast.error("Waiting for Player to join");
+      return;
+    }
 
     // If no starting square is selected
     if (!moveFrom) {

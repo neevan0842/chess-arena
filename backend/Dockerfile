@@ -4,6 +4,9 @@ FROM python:3.10-slim
 # Set the working directory to /code
 WORKDIR /code
 
+# Install dependencies
+RUN apt update && apt install -y stockfish
+
 # Copy the requirements file
 COPY ./requirements.txt /code/requirements.txt
 

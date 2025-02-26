@@ -12,8 +12,10 @@ FRONTEND_URLS = settings.FRONTEND_URLS
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await is_redis_available()
-    yield
-    await redis_client.close()
+    try:
+        yield
+    finally:
+        await redis_client.close()
 
 
 app = FastAPI(lifespan=lifespan, debug=True)

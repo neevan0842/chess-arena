@@ -1,5 +1,6 @@
 from datetime import datetime
 from pydantic import BaseModel
+from app.core.constants import AIDifficulty
 
 
 class GameResponse(BaseModel):
@@ -7,6 +8,21 @@ class GameResponse(BaseModel):
     player_white_id: str
     player_black_id: str | None
     fen: str
+    status: str
+    game_type: str
+    created_at: datetime
+
+
+class GameAIRequest(BaseModel):
+    ai_difficulty: AIDifficulty
+
+
+class GameAIResponse(BaseModel):
+    id: int
+    player_white_id: str
+    fen: str
+    ai_difficulty: AIDifficulty
+    game_type: str
     status: str
     created_at: datetime
 

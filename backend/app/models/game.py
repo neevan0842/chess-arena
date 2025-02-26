@@ -1,6 +1,6 @@
 from sqlalchemy import TIMESTAMP, Column, Integer, String, ForeignKey, text
 from app.core.database import Base
-from app.core.constants import GameStatus, GameType, Winner
+from app.core.constants import AIDifficulty, GameStatus, GameType, Winner
 
 
 class Game(Base):
@@ -11,6 +11,7 @@ class Game(Base):
     # Opponent can join later
     player_black_id = Column(String(36), ForeignKey("users.id"), nullable=True)
     game_type = Column(String, default=GameType.MULTIPLAYER)
+    ai_difficulty = Column(String, default=AIDifficulty.EASY)
     fen = Column(String, default="startpos")  # Use FEN notation for board state
     # Status: waiting, ongoing, finished
     status = Column(String, default=GameStatus.WAITING)

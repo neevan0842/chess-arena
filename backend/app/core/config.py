@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     # Frontend URL
     FRONTEND_URLS: str
 
+    # Stckfish Path
+    STOCKFISH_PATH: str
+
     # Cookie
     SECURE_COOKIE: bool = False
 

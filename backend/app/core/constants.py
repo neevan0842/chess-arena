@@ -17,3 +17,10 @@ class Winner(str, Enum):
     BLACK = "black"
     DRAW = "draw"
     ONGOING = "ongoing"
+    AI = "ai"
+
+
+class AIDifficulty(str, Enum):
+    EASY = "easy"
+    MEDIUM = "medium"
+    HARD = "hard"

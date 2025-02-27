@@ -4,6 +4,7 @@ import requests
 from fastapi import Depends, HTTPException, Response, WebSocket, status
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
+from sqlalchemy.future import select
 from app.core.config import settings
 from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
@@ -60,17 +61,21 @@ def create_tokens(data: dict):
 
 
 # Save refresh token to DB
-def store_refresh_token(db: Session, user_id: str, refresh_token: str):
-    user = db.query(User).filter(User.id == user_id).first()
+async def store_refresh_token(db: Session, user_id: str, refresh_token: str):
+    stmt = select(User).where(User.id == user_id)
+    result = await db.execute(stmt)
+    user = result.scalars().first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     user.refresh_token = refresh_token
-    db.commit()
+    await db.commit()
 
 
 # verify refresh token
-def verify_refresh_token(refresh_token: str, db: Session):
-    user = db.query(User).filter(User.refresh_token == refresh_token).first()
+async def verify_refresh_token(refresh_token: str, db: Session):
+    stmt = select(User).where(User.refresh_token == refresh_token)
+    result = await db.execute(stmt)
+    user = result.scalars().first()
     if not user:
         return None
     return user  # Return user object if valid
@@ -108,19 +113,23 @@ def delete_refresh_token_cookie(
 
 
 # get user from email or username
-def get_user(db: Session, email: str | None = None, username: str | None = None):
+async def get_user(db: Session, email: str | None = None, username: str | None = None):
     if email:
-        db_user = db.query(User).filter(User.email == email).first()
+        stmt = select(User).where(User.email == email)
+        result = await db.execute(stmt)
+        db_user = result.scalars().first()
     elif username:
-        db_user = db.query(User).filter(User.username == username).first()
+        stmt = select(User).where(User.username == username)
+        result = await db.execute(stmt)
+        db_user = result.scalars().first()
     else:
         return None
     return db_user
 
 
 # authenticate user
-def authenticate_user(username: str, password: str, db: Session):
-    db_user = get_user(username=username, db=db)
+async def authenticate_user(username: str, password: str, db: Session):
+    db_user = await get_user(username=username, db=db)
     if not db_user:
         return False
     if not verify_password(password, db_user.hashed_password):
@@ -177,7 +186,7 @@ async def get_token_via_google_code(code: str, db: Session):
             )
 
         # Step 3: Check if user exists in the database
-        db_user = get_user(email=email, db=db)
+        db_user = await get_user(email=email, db=db)
         if not db_user:
             # Generate a unique username
             username = await generate_unique_username(
@@ -190,12 +199,14 @@ async def get_token_via_google_code(code: str, db: Session):
                 oauth_provider_id=user_info_data.get("id"),
             )
             db.add(db_user)
-            db.commit()
-            db.refresh(db_user)
+            await db.commit()
+            await db.refresh(db_user)
 
         # Step 4: Generate JWT tokens
         access_token, refresh_token = create_tokens({"id": db_user.id})
-        store_refresh_token(db=db, user_id=db_user.id, refresh_token=refresh_token)
+        await store_refresh_token(
+            db=db, user_id=db_user.id, refresh_token=refresh_token
+        )
 
         return access_token, refresh_token
 
@@ -214,9 +225,9 @@ async def generate_unique_username(base_username: str, db: Session) -> str:
     username by appending a number if necessary.
     """
     # Query all usernames that start with the base_username (case-insensitive)
-    similar_users = (
-        db.query(User.username).filter(User.username.ilike(f"{base_username}%")).all()
-    )
+    stmt = select(User.username).where(User.username.ilike(f"{base_username}%"))
+    result = await db.execute(stmt)
+    similar_users = result.scalars().all()
 
     # Flatten the result into a list of strings
     similar_usernames = [username for (username,) in similar_users]
@@ -257,7 +268,9 @@ async def get_current_user(
     except InvalidTokenError:
         raise credentials_exception
 
-    db_user = db.query(User).filter(User.id == user_id).first()
+    stmt = select(User).where(User.id == user_id)
+    result = await db.execute(stmt)
+    db_user = result.scalars().first()
     if db_user is None:
         raise credentials_exception
     return db_user
@@ -292,7 +305,9 @@ async def verify_logged_in_user_ws(
     except InvalidTokenError:
         await credentials_exception()
 
-    db_user = db.query(User).filter(User.id == user_id).first()
+    stmt = select(User).where(User.id == user_id)
+    result = await db.execute(stmt)
+    db_user = result.scalars().first()
     if db_user is None:
         await credentials_exception()
     return access_token

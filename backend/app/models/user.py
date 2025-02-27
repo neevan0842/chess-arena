@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import TIMESTAMP, Boolean, Column, String, Text, UUID
+from sqlalchemy import TIMESTAMP, Boolean, Column, String, Text
 from sqlalchemy.sql import func
 from app.core.database import Base
 
@@ -7,7 +7,9 @@ from app.core.database import Base
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    id = Column(
+        String(36), primary_key=True, default=lambda: str(uuid.uuid4()), index=True
+    )
     username = Column(String(50), unique=True, nullable=True)
     email = Column(String(100), unique=True, nullable=False)
     hashed_password = Column(Text, nullable=True)  # NULL if using OAuth

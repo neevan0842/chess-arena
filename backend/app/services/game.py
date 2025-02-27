@@ -1,6 +1,7 @@
 import chess.engine
 from fastapi import HTTPException, Request, status
 from redis.asyncio import Redis
+from sqlalchemy.future import select
 from sqlalchemy.orm import Session
 from app.models.game import Game
 from app.core.constants import (
@@ -18,12 +19,12 @@ import json
 STOCKFISH_PATH = settings.STOCKFISH_PATH
 
 
-def join_existing_game_multiplayer(game_id: int, db: Session, player_id: str):
-    game = (
-        db.query(Game)
-        .filter(Game.id == game_id, Game.game_type == GameType.MULTIPLAYER)
-        .first()
+async def join_existing_game_multiplayer(game_id: int, db: Session, player_id: str):
+    stmt = select(Game).where(
+        Game.id == game_id, Game.game_type == GameType.MULTIPLAYER
     )
+    result = await db.execute(stmt)
+    game = result.scalars().first()
     if not game:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Game not found"
@@ -44,20 +45,20 @@ def join_existing_game_multiplayer(game_id: int, db: Session, player_id: str):
         )
     game.player_black_id = player_id
     game.status = GameStatus.ONGOING
-    db.commit()
-    db.refresh(game)
+    await db.commit()
+    await db.refresh(game)
     return game
 
 
 # Validate and update the move in a multiplayer game and return the updated game and next turn
-def validate_and_update_move_multiplayer(
+async def validate_and_update_move_multiplayer(
     game_id: int, move: str, player_id: str, db: Session
 ):
-    game = (
-        db.query(Game)
-        .filter(Game.id == game_id, Game.game_type == GameType.MULTIPLAYER)
-        .first()
+    stmt = select(Game).where(
+        Game.id == game_id, Game.game_type == GameType.MULTIPLAYER
     )
+    result = await db.execute(stmt)
+    game = result.scalars().first()
     if not game:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Game not found"
@@ -121,8 +122,8 @@ def validate_and_update_move_multiplayer(
         )  # Game drawn by stalemate, insufficient material, or fifty-move rule
         game.winner = Winner.DRAW
 
-    db.commit()
-    db.refresh(game)
+    await db.commit()
+    await db.refresh(game)
 
     return game
 
@@ -130,9 +131,9 @@ def validate_and_update_move_multiplayer(
 async def validate_and_update_move_ai(
     game_id: int, move: str, player_id: str, db: Session, request: Request
 ):
-    game = (
-        db.query(Game).filter(Game.id == game_id, Game.game_type == GameType.AI).first()
-    )
+    stmt = select(Game).where(Game.id == game_id, Game.game_type == GameType.AI)
+    result = await db.execute(stmt)
+    game = result.scalars().first()
     if not game:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Game not found"
@@ -179,8 +180,8 @@ async def validate_and_update_move_ai(
     if board.is_checkmate():
         game.status = GameStatus.FINISHED
         game.winner = Winner.WHITE
-        db.commit()
-        db.refresh(game)
+        await db.commit()
+        await db.refresh(game)
         return game
     elif (
         board.is_stalemate()
@@ -189,8 +190,8 @@ async def validate_and_update_move_ai(
     ):
         game.status = GameStatus.FINISHED
         game.winner = Winner.DRAW
-        db.commit()
-        db.refresh(game)
+        await db.commit()
+        await db.refresh(game)
         return game
 
     # AI Move
@@ -210,8 +211,8 @@ async def validate_and_update_move_ai(
     if board.is_checkmate():
         game.status = GameStatus.FINISHED
         game.winner = Winner.AI
-        db.commit()
-        db.refresh(game)
+        await db.commit()
+        await db.refresh(game)
         return game
     elif (
         board.is_stalemate()
@@ -220,21 +221,21 @@ async def validate_and_update_move_ai(
     ):
         game.status = GameStatus.FINISHED
         game.winner = Winner.DRAW
-        db.commit()
-        db.refresh(game)
+        await db.commit()
+        await db.refresh(game)
         return game
 
-    db.commit()
-    db.refresh(game)
+    await db.commit()
+    await db.refresh(game)
     return game
 
 
-def resign_game_multiplayer(game_id: int, db: Session, player_id: str):
-    game = (
-        db.query(Game)
-        .filter(Game.id == game_id, Game.game_type == GameType.MULTIPLAYER)
-        .first()
+async def resign_game_multiplayer(game_id: int, db: Session, player_id: str):
+    stmt = select(Game).where(
+        Game.id == game_id, Game.game_type == GameType.MULTIPLAYER
     )
+    result = await db.execute(stmt)
+    game = result.scalars().first()
     if not game:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Game not found"
@@ -254,15 +255,15 @@ def resign_game_multiplayer(game_id: int, db: Session, player_id: str):
             status_code=status.HTTP_400_BAD_REQUEST, detail="You are not in the game"
         )
     game.status = GameStatus.FINISHED
-    db.commit()
-    db.refresh(game)
+    await db.commit()
+    await db.refresh(game)
     return game
 
 
-def resign_ai_game(game_id: int, db: Session, player_id: str):
-    game = (
-        db.query(Game).filter(Game.id == game_id, Game.game_type == GameType.AI).first()
-    )
+async def resign_ai_game(game_id: int, db: Session, player_id: str):
+    stmt = select(Game).where(Game.id == game_id, Game.game_type == GameType.AI)
+    result = await db.execute(stmt)
+    game = result.scalars().first()
     if not game:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Game not found"
@@ -277,8 +278,8 @@ def resign_ai_game(game_id: int, db: Session, player_id: str):
         )
     game.winner = Winner.AI
     game.status = GameStatus.FINISHED
-    db.commit()
-    db.refresh(game)
+    await db.commit()
+    await db.refresh(game)
     return game
 
 

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.future import select
 from app.schemas.auth import (
     LoginResponse,
     RefreshResponse,
@@ -34,11 +35,11 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 )
 async def register(user: UserRegister, db: Session = Depends(get_db)):
 
-    if get_user(email=user.email, db=db):
+    if await get_user(email=user.email, db=db):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Email already exists"
         )
-    if get_user(username=user.username, db=db):
+    if await get_user(username=user.username, db=db):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Username already exists"
         )
@@ -47,8 +48,8 @@ async def register(user: UserRegister, db: Session = Depends(get_db)):
         username=user.username, email=user.email, hashed_password=hashed_password
     )
     db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
+    await db.commit()
+    await db.refresh(db_user)
     return db_user
 
 
@@ -59,7 +60,7 @@ async def login(
     db: Session = Depends(get_db),
 ):
 
-    user = authenticate_user(
+    user = await authenticate_user(
         username=form_data.username, password=form_data.password, db=db
     )
     if not user:
@@ -69,7 +70,7 @@ async def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
     access_token, refresh_token = create_tokens(data={"id": user.id})
-    store_refresh_token(db=db, user_id=user.id, refresh_token=refresh_token)
+    await store_refresh_token(db=db, user_id=user.id, refresh_token=refresh_token)
     # Set refresh token as httpOnly cookie
     set_refresh_token_cookie(response=response, refresh_token=refresh_token)
     return LoginResponse(access_token=access_token, token_type="bearer")
@@ -78,7 +79,7 @@ async def login(
 @router.post("/refresh")
 async def refresh_token(request: Request, db: Session = Depends(get_db)):
     refresh_token = request.cookies.get("refresh_token")
-    db_user = verify_refresh_token(refresh_token=refresh_token, db=db)
+    db_user = await verify_refresh_token(refresh_token=refresh_token, db=db)
     if not db_user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -97,10 +98,11 @@ async def logout(
     """
     Remove the refresh token from the current user, effectively logging them out
     """
-
-    db_user = db.query(User).filter(User.id == current_user.id).first()
+    stmt = select(User).where(User.id == current_user.id)
+    result = await db.execute(stmt)
+    db_user = result.scalars().first()
     db_user.refresh_token = None
-    db.commit()
+    await db.commit()
     delete_refresh_token_cookie(response=response)
     return JSONResponse(
         status_code=status.HTTP_200_OK, content={"message": "Logout Successful"}

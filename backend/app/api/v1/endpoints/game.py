@@ -35,8 +35,8 @@ async def create_game(
 ):
     game = Game(player_white_id=current_user.id, game_type=GameType.MULTIPLAYER)
     db.add(game)
-    db.commit()
-    db.refresh(game)
+    await db.commit()
+    await db.refresh(game)
     return game
 
 
@@ -47,7 +47,7 @@ async def join_game(
     current_user: User = Depends(get_current_active_user),
     redis_client: Redis = Depends(get_redis_client),
 ):
-    game: Game = join_existing_game_multiplayer(
+    game: Game = await join_existing_game_multiplayer(
         game_id=payload.game_id, db=db, player_id=current_user.id
     )
     await publish_redis(
@@ -63,7 +63,7 @@ async def make_move(
     current_user: User = Depends(get_current_active_user),
     redis_client: Redis = Depends(get_redis_client),
 ):
-    game = validate_and_update_move_multiplayer(
+    game = await validate_and_update_move_multiplayer(
         payload.game_id, payload.move, current_user.id, db
     )
     await publish_redis(
@@ -79,7 +79,7 @@ async def resign_game(
     current_user: User = Depends(get_current_active_user),
     redis_client: Redis = Depends(get_redis_client),
 ):
-    game: Game = resign_game_multiplayer(
+    game: Game = await resign_game_multiplayer(
         game_id=payload.game_id, db=db, player_id=current_user.id
     )
 
@@ -105,8 +105,8 @@ async def create_game_ai(
         status=GameStatus.ONGOING,
     )
     db.add(game)
-    db.commit()
-    db.refresh(game)
+    await db.commit()
+    await db.refresh(game)
     return game
 
 
@@ -133,5 +133,7 @@ async def resign_game_ai(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    game = resign_ai_game(game_id=payload.game_id, db=db, player_id=current_user.id)
+    game = await resign_ai_game(
+        game_id=payload.game_id, db=db, player_id=current_user.id
+    )
     return MoveResponse(fen=game.fen, status=game.status, winner=game.winner)

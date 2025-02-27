@@ -51,6 +51,13 @@ const Lobby: React.FC = () => {
   return (
     <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-6">
       <div className="w-full max-w-4xl bg-card border border-border rounded-lg shadow-lg p-8">
+        <button
+          onClick={() => navigate(-1)}
+          className="absolute top-4 left-4 px-4 py-2 bg-gray-800 text-white font-semibold rounded hover:bg-gray-900 transition-colors"
+        >
+          ← Back
+        </button>
+
         <div className="grid grid-cols-1  gap-10">
           <div className="flex flex-col items-center">
             <div className="mb-6 text-center">

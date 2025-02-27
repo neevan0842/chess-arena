@@ -36,6 +36,12 @@ const LobbyAI = () => {
       {/* Dimming Overlay (Ensures background is darker but not the content) */}
       <div className="absolute inset-0 bg-black/60"></div>
 
+      <button
+        onClick={() => navigate(-1)}
+        className="absolute top-4 left-4 px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded hover:bg-gray-300 transition-colors"
+      >
+        ← Back
+      </button>
       {/* Content Wrapper (Z-index ensures it stays above the dimming layer) */}
       <div className="relative z-10 flex flex-col space-y-4 bg-gray-200 p-6 rounded-lg shadow-xl w-72">
         <h1 className="text-black text-center text-2xl font-semibold">

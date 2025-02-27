@@ -30,6 +30,9 @@ const MultiplayerGame = () => {
   };
 
   const handleResign = async () => {
+    const confirmResign = window.confirm("Are you sure you want to resign?");
+    if (!confirmResign) return;
+
     try {
       const data = await resignGame(gameId!);
       if (!data) {
@@ -50,6 +53,12 @@ const MultiplayerGame = () => {
   return (
     <div className="flex justify-center items-center h-screen bg-orange-200">
       <div className="">
+        <button
+          onClick={() => navigate(-1)}
+          className="absolute top-4 left-4 px-4 py-2 bg-orange-800 text-white font-semibold rounded hover:bg-orange-900 transition-colors"
+        >
+          ← Back
+        </button>
         <div className="text-center mb-4">
           <h1 className="text-2xl font-semibold">
             Game Code: <span className="font-mono">{gameId}</span>

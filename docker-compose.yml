@@ -1,24 +1,32 @@
 services:
   redis:
-    image: redis:8.0-M03-alpine
+    image: redis:latest
     ports:
       - "6379:6379"
     restart: unless-stopped
+
+  postgres:
+    image: postgres:latest
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: chess
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: chess
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
   backend:
     build:
       context: ./backend
     ports:
       - "8000:8000"
-    volumes:
-      - ./backend/app.db:/code/app.db
     develop:
       watch:
         - action: sync+restart
           path: ./backend
           target: /code
-          ignore:
-            - app.db
         - action: rebuild
           path: ./backend/requirements.txt
           target: /code/requirements.txt
@@ -26,6 +34,7 @@ services:
       - ./backend/.env.docker
     depends_on:
       - redis
+      - postgres
     command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
     restart: unless-stopped
 
@@ -46,3 +55,6 @@ services:
           target: /code/package.json
     command: bun run dev --host
     restart: unless-stopped
+
+volumes:
+  postgres_data:

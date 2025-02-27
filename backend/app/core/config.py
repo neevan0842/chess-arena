@@ -4,7 +4,8 @@ from pydantic import ConfigDict
 
 class Settings(BaseSettings):
     # Database
-    DATABASE_URL: str
+    DATABASE_URL_ASYNC: str
+    DATABASE_URL_SYNC: str
 
     # Redis
     REDIS_HOST: str

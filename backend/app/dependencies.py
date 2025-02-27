@@ -1,14 +1,12 @@
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import SessionLocal
 from app.core.redis_client import redis_client
 
 
 # get database session
-def get_db():
-    db = SessionLocal()
-    try:
+async def get_db():
+    async with SessionLocal() as db:
         yield db
-    finally:
-        db.close()
 
 
 # get redis connection

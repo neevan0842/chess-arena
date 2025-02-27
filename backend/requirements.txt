@@ -7,3 +7,5 @@ passlib[bcrypt]
 requests
 redis[hiredis]
 chess
+psycopg2-binary
+asyncpg

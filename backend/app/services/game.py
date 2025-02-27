@@ -2,7 +2,7 @@ import chess.engine
 from fastapi import HTTPException, Request, status
 from redis.asyncio import Redis
 from sqlalchemy.future import select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.game import Game
 from app.core.constants import (
     AIDifficulty,
@@ -19,7 +19,9 @@ import json
 STOCKFISH_PATH = settings.STOCKFISH_PATH
 
 
-async def join_existing_game_multiplayer(game_id: int, db: Session, player_id: str):
+async def join_existing_game_multiplayer(
+    game_id: int, db: AsyncSession, player_id: str
+):
     stmt = select(Game).where(
         Game.id == game_id, Game.game_type == GameType.MULTIPLAYER
     )
@@ -52,7 +54,7 @@ async def join_existing_game_multiplayer(game_id: int, db: Session, player_id: s
 
 # Validate and update the move in a multiplayer game and return the updated game and next turn
 async def validate_and_update_move_multiplayer(
-    game_id: int, move: str, player_id: str, db: Session
+    game_id: int, move: str, player_id: str, db: AsyncSession
 ):
     stmt = select(Game).where(
         Game.id == game_id, Game.game_type == GameType.MULTIPLAYER
@@ -129,7 +131,7 @@ async def validate_and_update_move_multiplayer(
 
 
 async def validate_and_update_move_ai(
-    game_id: int, move: str, player_id: str, db: Session, request: Request
+    game_id: int, move: str, player_id: str, db: AsyncSession, request: Request
 ):
     stmt = select(Game).where(Game.id == game_id, Game.game_type == GameType.AI)
     result = await db.execute(stmt)
@@ -230,7 +232,7 @@ async def validate_and_update_move_ai(
     return game
 
 
-async def resign_game_multiplayer(game_id: int, db: Session, player_id: str):
+async def resign_game_multiplayer(game_id: int, db: AsyncSession, player_id: str):
     stmt = select(Game).where(
         Game.id == game_id, Game.game_type == GameType.MULTIPLAYER
     )
@@ -260,7 +262,7 @@ async def resign_game_multiplayer(game_id: int, db: Session, player_id: str):
     return game
 
 
-async def resign_ai_game(game_id: int, db: Session, player_id: str):
+async def resign_ai_game(game_id: int, db: AsyncSession, player_id: str):
     stmt = select(Game).where(Game.id == game_id, Game.game_type == GameType.AI)
     result = await db.execute(stmt)
     game = result.scalars().first()

@@ -7,7 +7,7 @@ from passlib.context import CryptContext
 from sqlalchemy.future import select
 from app.core.config import settings
 from datetime import datetime, timedelta, timezone
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import User
 from app.dependencies import get_db
 from jwt.exceptions import InvalidTokenError
@@ -61,7 +61,7 @@ def create_tokens(data: dict):
 
 
 # Save refresh token to DB
-async def store_refresh_token(db: Session, user_id: str, refresh_token: str):
+async def store_refresh_token(db: AsyncSession, user_id: str, refresh_token: str):
     stmt = select(User).where(User.id == user_id)
     result = await db.execute(stmt)
     user = result.scalars().first()
@@ -72,7 +72,7 @@ async def store_refresh_token(db: Session, user_id: str, refresh_token: str):
 
 
 # verify refresh token
-async def verify_refresh_token(refresh_token: str, db: Session):
+async def verify_refresh_token(refresh_token: str, db: AsyncSession):
     stmt = select(User).where(User.refresh_token == refresh_token)
     result = await db.execute(stmt)
     user = result.scalars().first()
@@ -113,7 +113,9 @@ def delete_refresh_token_cookie(
 
 
 # get user from email or username
-async def get_user(db: Session, email: str | None = None, username: str | None = None):
+async def get_user(
+    db: AsyncSession, email: str | None = None, username: str | None = None
+):
     if email:
         stmt = select(User).where(User.email == email)
         result = await db.execute(stmt)
@@ -128,7 +130,7 @@ async def get_user(db: Session, email: str | None = None, username: str | None =
 
 
 # authenticate user
-async def authenticate_user(username: str, password: str, db: Session):
+async def authenticate_user(username: str, password: str, db: AsyncSession):
     db_user = await get_user(username=username, db=db)
     if not db_user:
         return False
@@ -144,7 +146,7 @@ def get_google_oauth_url():
 
 
 # get user details from google oauth via code
-async def get_token_via_google_code(code: str, db: Session):
+async def get_token_via_google_code(code: str, db: AsyncSession):
     try:
         # Step 1: Exchange code for access token
         token_url = "https://oauth2.googleapis.com/token"
@@ -217,7 +219,7 @@ async def get_token_via_google_code(code: str, db: Session):
 
 
 # generate unique username
-async def generate_unique_username(base_username: str, db: Session) -> str:
+async def generate_unique_username(base_username: str, db: AsyncSession) -> str:
     """
     Generate a unique username based on base_username.
     This function queries the database for existing usernames that
@@ -253,7 +255,7 @@ async def generate_unique_username(base_username: str, db: Session) -> str:
 
 # get current users
 async def get_current_user(
-    token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
+    token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)
 ):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -283,7 +285,7 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
 
 # verify logged in user and return token if authenticated
 async def verify_logged_in_user_ws(
-    websocket: WebSocket, db: Session = Depends(get_db)
+    websocket: WebSocket, db: AsyncSession = Depends(get_db)
 ) -> str:
 
     async def credentials_exception():

@@ -8,7 +8,7 @@ from app.schemas.auth import (
     UserRegister,
     UserResponse,
 )
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.dependencies import get_db
 from app.models.user import User
 from app.services.auth import (
@@ -33,7 +33,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 @router.post(
     "/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED
 )
-async def register(user: UserRegister, db: Session = Depends(get_db)):
+async def register(user: UserRegister, db: AsyncSession = Depends(get_db)):
 
     if await get_user(email=user.email, db=db):
         raise HTTPException(
@@ -57,7 +57,7 @@ async def register(user: UserRegister, db: Session = Depends(get_db)):
 async def login(
     response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
 
     user = await authenticate_user(
@@ -77,7 +77,7 @@ async def login(
 
 
 @router.post("/refresh")
-async def refresh_token(request: Request, db: Session = Depends(get_db)):
+async def refresh_token(request: Request, db: AsyncSession = Depends(get_db)):
     refresh_token = request.cookies.get("refresh_token")
     db_user = await verify_refresh_token(refresh_token=refresh_token, db=db)
     if not db_user:
@@ -93,7 +93,7 @@ async def refresh_token(request: Request, db: Session = Depends(get_db)):
 async def logout(
     response: Response,
     current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Remove the refresh token from the current user, effectively logging them out
@@ -119,7 +119,7 @@ async def oauth_google_redirect_url():
 
 @router.get("/google/callback")
 async def oauth_google_callback(
-    code: str, response: Response, db: Session = Depends(get_db)
+    code: str, response: Response, db: AsyncSession = Depends(get_db)
 ):
     access_token, refresh_token = await get_token_via_google_code(code, db)
     # Set refresh token as httpOnly cookie

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Request, status
 from redis.asyncio import Redis
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.schemas.game import (
     GameAIRequest,
     GameAIResponse,
@@ -31,7 +31,8 @@ router = APIRouter(prefix="/game", tags=["game"])
     "/create", response_model=GameResponse, status_code=status.HTTP_201_CREATED
 )
 async def create_game(
-    db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     game = Game(player_white_id=current_user.id, game_type=GameType.MULTIPLAYER)
     db.add(game)
@@ -43,7 +44,7 @@ async def create_game(
 @router.post("/join", response_model=GameResponse)
 async def join_game(
     payload: JoinRequest,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     redis_client: Redis = Depends(get_redis_client),
 ):
@@ -59,7 +60,7 @@ async def join_game(
 @router.post("/move")
 async def make_move(
     payload: MoveRequest,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     redis_client: Redis = Depends(get_redis_client),
 ):
@@ -75,7 +76,7 @@ async def make_move(
 @router.post("/resign")
 async def resign_game(
     payload: JoinRequest,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     redis_client: Redis = Depends(get_redis_client),
 ):
@@ -94,7 +95,7 @@ async def resign_game(
 )
 async def create_game_ai(
     payload: GameAIRequest,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     ai_difficulty = payload.ai_difficulty
@@ -114,7 +115,7 @@ async def create_game_ai(
 async def make_move_ai(
     payload: MoveRequest,
     request: Request,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     game = await validate_and_update_move_ai(
@@ -130,7 +131,7 @@ async def make_move_ai(
 @router.post("/ai/resign")
 async def resign_game_ai(
     payload: JoinRequest,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     game = await resign_ai_game(

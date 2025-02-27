@@ -1,3 +1,4 @@
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import useAuthStore from "@/store/useAuthStore";
 import { useEffect, useState } from "react";
@@ -40,13 +41,26 @@ const Home = () => {
           </h1>
           <div className="flex space-x-2 md:space-x-4">
             {authorised ? (
-              <Button
-                variant="outline"
-                onClick={handleLogout}
-                className="text-sm md:text-base px-4 py-2"
-              >
-                Logout
-              </Button>
+              <>
+                <Avatar
+                  onClick={() => navigate("/profile")}
+                  className="w-10 h-10 rounded-full border-2 border-gray-300 shadow-sm overflow-hidden bg-white cursor-pointer"
+                >
+                  <AvatarImage
+                    src="/profile.png"
+                    alt="User Avatar"
+                    className="object-cover w-full h-full"
+                  />
+                </Avatar>
+
+                <Button
+                  variant="outline"
+                  onClick={handleLogout}
+                  className="text-sm md:text-base px-4 py-2"
+                >
+                  Logout
+                </Button>
+              </>
             ) : (
               <>
                 <Button

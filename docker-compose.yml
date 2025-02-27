@@ -45,7 +45,7 @@ services:
       - "5173:5173"
     develop:
       watch:
-        - action: sync+restart
+        - action: sync
           path: ./frontend
           target: /code
           ignore:

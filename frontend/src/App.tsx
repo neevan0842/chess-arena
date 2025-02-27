@@ -10,6 +10,7 @@ import Lobby from "./pages/Lobby";
 import MultiplayerGame from "./pages/MultiplayerGame";
 import AIGame from "./pages/AIGame";
 import LobbyAI from "./pages/LobbyAI";
+import ProfilePage from "./pages/Profile";
 
 const App = () => {
   return (
@@ -26,6 +27,7 @@ const App = () => {
           <Route path="/multiplayer" element={<MultiplayerGame />} />
           <Route path="/lobbyai" element={<LobbyAI />} />
           <Route path="/ai" element={<AIGame />} />
+          <Route path="/profile" element={<ProfilePage />} />
         </Route>
 
         {/* Google OAuth callback route */}

@@ -18,27 +18,27 @@ async def get_current_user(current_user: User = Depends(get_current_active_user)
     return current_user
 
 
-@router.get("/{user_id}/stats", response_model=UserStatsResponse)
+@router.get("/{username}/stats", response_model=UserStatsResponse)
 async def get_user_stats(
-    user_id: str,
+    username: str,
     db: AsyncSession = Depends(get_db),
 ):
-    stats = await get_player_stats(user_id=user_id, db=db)
+    stats = await get_player_stats(username=username, db=db)
     return stats
 
 
-@router.get("/{user_id}/games", response_model=List[RecentGameResponse])
+@router.get("/{username}/games", response_model=List[RecentGameResponse])
 async def get_recent_games(
-    user_id: str,
+    username: str,
     db: AsyncSession = Depends(get_db),
 ):
-    recent_games = await get_recent_games_details(user_id=user_id, db=db)
+    recent_games = await get_recent_games_details(username=username, db=db)
     return recent_games
 
 
-@router.get("/{user_id}", response_model=UserResponse)
-async def get_user_by_id(user_id: str, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(User).where(User.id == user_id))
+@router.get("/{username}", response_model=UserResponse)
+async def get_user_by_id(username: str, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(User).where(User.username == username))
     user = result.scalars().first()
     if not user:
         raise HTTPException(

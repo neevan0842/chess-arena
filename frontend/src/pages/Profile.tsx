@@ -23,7 +23,7 @@ import { UserInterface } from "@/api/authApi";
 import { formatJoinDate } from "@/utils/utilities";
 
 const ProfilePage = () => {
-  const { userId } = useParams();
+  const { username } = useParams();
   const navigate = useNavigate();
   const [userData, setUserData] = useState<UserInterface | null>(null);
   const [userStats, setUserStats] = useState<UserStatsInterface | null>(null);
@@ -31,23 +31,29 @@ const ProfilePage = () => {
     null
   );
 
+  const handleUserRedirect = (game: RecentGameInterface) => {
+    if (!game) return;
+    if (game.game_type === "ai") return;
+    navigate(`/profile/${game.opponentUsername}`);
+  };
+
   useEffect(() => {
     const getUserProfileDetails = async () => {
-      if (!userId) {
+      if (!username) {
         navigate("/not-found");
       }
-      const data = await getUserData(userId!);
+      const data = await getUserData(username!);
       if (!data) {
         navigate("/not-found");
       }
-      const stats = await getUserStats(userId!);
-      const games = await getRecentGames(userId!);
+      const stats = await getUserStats(username!);
+      const games = await getRecentGames(username!);
       setUserData(data);
       setUserStats(stats);
       setRecentGames(games);
     };
     getUserProfileDetails();
-  }, [userId, navigate]);
+  }, [username, navigate]);
 
   return (
     <div className="max-w-3xl mx-auto p-6 space-y-6">
@@ -136,7 +142,12 @@ const ProfilePage = () => {
                 {recentGames && recentGames.length > 0 ? (
                   recentGames.map((game, index) => (
                     <TableRow key={index}>
-                      <TableCell>{game.opponentUsername}</TableCell>
+                      <TableCell
+                        onClick={() => handleUserRedirect(game)}
+                        className="cursor-pointer"
+                      >
+                        {game.opponentUsername}
+                      </TableCell>
                       <TableCell>{game.result}</TableCell>
                       <TableCell>{game.game_type}</TableCell>
                       <TableCell>{`${formatJoinDate(

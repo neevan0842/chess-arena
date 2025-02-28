@@ -20,7 +20,7 @@ const App = () => {
         <Route index element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/profile/:userId" element={<ProfilePage />} />
+        <Route path="/profile/:username" element={<ProfilePage />} />
 
         {/* Protected routes */}
         <Route element={<ProtectedRoute />}>

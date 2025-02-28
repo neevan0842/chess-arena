@@ -44,7 +44,9 @@ const Home = () => {
               <>
                 <Avatar
                   onClick={() =>
-                    navigate(`/profile/${useAuthStore.getState().user?.id}`)
+                    navigate(
+                      `/profile/${useAuthStore.getState().user?.username}`
+                    )
                   }
                   className="w-10 h-10 rounded-full border-2 border-gray-300 shadow-sm overflow-hidden bg-white cursor-pointer"
                 >

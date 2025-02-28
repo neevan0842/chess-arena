@@ -22,9 +22,9 @@ interface RecentGameInterface {
   date: Date;
 }
 
-const getUserData = async (id: string): Promise<UserInterface | null> => {
+const getUserData = async (username: string): Promise<UserInterface | null> => {
   try {
-    const response = await apiUnauthenticated.get(`/api/v1/users/${id}`);
+    const response = await apiUnauthenticated.get(`/api/v1/users/${username}`);
     if (response.status !== 200) {
       console.error(response);
       return null;
@@ -40,9 +40,13 @@ const getUserData = async (id: string): Promise<UserInterface | null> => {
   }
 };
 
-const getUserStats = async (id: string): Promise<UserStatsInterface | null> => {
+const getUserStats = async (
+  username: string
+): Promise<UserStatsInterface | null> => {
   try {
-    const response = await apiUnauthenticated.get(`/api/v1/users/${id}/stats`);
+    const response = await apiUnauthenticated.get(
+      `/api/v1/users/${username}/stats`
+    );
     if (response.status !== 200) {
       console.error(response);
       return null;
@@ -67,10 +71,12 @@ const getUserStats = async (id: string): Promise<UserStatsInterface | null> => {
 };
 
 const getRecentGames = async (
-  id: string
+  username: string
 ): Promise<RecentGameInterface[] | null> => {
   try {
-    const response = await apiUnauthenticated.get(`/api/v1/users/${id}/games`);
+    const response = await apiUnauthenticated.get(
+      `/api/v1/users/${username}/games`
+    );
     if (response.status !== 200) {
       console.error(response);
       return null;

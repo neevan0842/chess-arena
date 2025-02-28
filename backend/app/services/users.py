@@ -1,4 +1,5 @@
 from typing import List
+from fastapi import HTTPException, status
 from sqlalchemy.sql import case
 from sqlalchemy.future import select
 from app.models.game import Game
@@ -8,7 +9,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import User
 
 
-async def get_player_stats(user_id: str, db: AsyncSession) -> UserStatsResponse:
+async def get_player_stats(username: str, db: AsyncSession) -> UserStatsResponse:
+    user_result = await db.execute(select(User).where(User.username == username))
+    db_user = user_result.scalars().first()
+    if not db_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
+    user_id = db_user.id
     result = await db.execute(
         select(Game).where(
             (Game.player_white_id == user_id) | (Game.player_black_id == user_id)
@@ -103,8 +111,16 @@ async def get_player_stats(user_id: str, db: AsyncSession) -> UserStatsResponse:
 
 
 async def get_recent_games_details(
-    user_id: str, db: AsyncSession
+    username: str, db: AsyncSession
 ) -> List[RecentGameResponse]:
+    user_result = await db.execute(select(User).where(User.username == username))
+    db_user = user_result.scalars().first()
+    if not db_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
+    user_id = db_user.id
+
     opponent_alias = case(
         (Game.player_white_id == user_id, Game.player_black_id),
         else_=Game.player_white_id,

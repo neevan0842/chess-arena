@@ -46,7 +46,7 @@ services:
       - frontend
       - backend
     volumes:
-      - ./Caddyfile:/etc/caddy
+      - ./Caddyfile:/etc/caddy/Caddyfile
       - dist:/srv
       - caddy_data:/data
       - caddy_config:/config

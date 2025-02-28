@@ -1,10 +1,10 @@
-chess.arena.chickenkiller.com {
+chessarena.chickenkiller.com {
     root * /srv
     encode gzip
     file_server
 }
 
-api.chess.arena.chickenkiller.com {
+api.chessarena.chickenkiller.com {
     reverse_proxy backend:8000
     encode gzip
 }

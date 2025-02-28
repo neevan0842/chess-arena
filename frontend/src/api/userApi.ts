@@ -1,73 +1,30 @@
-import { apiAuthenticated, apiUnauthenticated } from "./api";
+import { apiUnauthenticated } from "./api";
+import { UserInterface } from "./authApi";
 
-interface LoginResponseInterface {
-  access_token: string;
-  token_type: string;
+interface UserStatsInterface {
+  totalGames: number;
+  multiplayerWins: number;
+  multiplayerLosses: number;
+  multiplayerWinRate: string;
+  mostPlayedColor?: "White" | "Black" | null;
+  bestStreak: number;
+  aiGames: number;
+  aiWins: number;
+  aiLosses: number;
+  aiWinRate: string;
 }
 
-interface UserInterface {
-  id: string;
-  username: string;
-  email: string;
-  is_active: boolean;
-  created_at: Date;
+interface RecentGameInterface {
+  opponentUsername: string;
+  opponentId: string | null;
+  result: "win" | "loss" | "draw";
+  game_type: "multiplayer" | "ai";
+  date: Date;
 }
 
-const loginUser = async ({
-  username,
-  password,
-}: {
-  username: string;
-  password: string;
-}): Promise<LoginResponseInterface | null> => {
+const getUserData = async (id: string): Promise<UserInterface | null> => {
   try {
-    const formData = new FormData();
-    formData.append("username", username);
-    formData.append("password", password);
-
-    const response = await apiUnauthenticated.post(
-      "/api/v1/auth/login",
-      formData
-    );
-    if (response.status !== 200) {
-      return null;
-    }
-    return response.data;
-  } catch (error) {
-    console.error(error);
-    return null;
-  }
-};
-
-const registerUser = async ({
-  username,
-  email,
-  password,
-}: {
-  username: string;
-  email: string;
-  password: string;
-}): Promise<UserInterface | null> => {
-  try {
-    const response = await apiUnauthenticated.post("/api/v1/auth/register", {
-      username,
-      email,
-      password,
-    });
-    if (response.status !== 201) {
-      console.error(response);
-      return null;
-    }
-    return response.data;
-  } catch (error) {
-    console.error(error);
-    return null;
-  }
-};
-
-const fetchUserProfile = async (): Promise<UserInterface | null> => {
-  try {
-    const response = await apiAuthenticated.get("/api/v1/users/me");
+    const response = await apiUnauthenticated.get(`/api/v1/users/${id}`);
     if (response.status !== 200) {
       console.error(response);
       return null;
@@ -83,73 +40,54 @@ const fetchUserProfile = async (): Promise<UserInterface | null> => {
   }
 };
 
-const logoutUser = async (): Promise<{ message: string } | null> => {
+const getUserStats = async (id: string): Promise<UserStatsInterface | null> => {
   try {
-    const response = await apiAuthenticated.post("/api/v1/auth/logout");
+    const response = await apiUnauthenticated.get(`/api/v1/users/${id}/stats`);
     if (response.status !== 200) {
       console.error(response);
       return null;
     }
-    return response.data;
+    const data: UserStatsInterface = {
+      totalGames: response.data.total_games,
+      multiplayerWins: response.data.multiplayer_wins,
+      multiplayerLosses: response.data.multiplayer_losses,
+      multiplayerWinRate: response.data.multiplayer_win_rate,
+      mostPlayedColor: response.data.most_played_color ?? null,
+      bestStreak: response.data.best_streak,
+      aiGames: response.data.ai_games,
+      aiWins: response.data.ai_wins,
+      aiLosses: response.data.ai_losses,
+      aiWinRate: response.data.ai_win_rate,
+    };
+    return data;
   } catch (error) {
     console.error(error);
     return null;
   }
 };
 
-const getAccessTokenWithRefreshToken =
-  async (): Promise<LoginResponseInterface | null> => {
-    try {
-      const response = await apiUnauthenticated.post("/api/v1/auth/refresh");
-      if (response.status !== 200) {
-        console.error(response);
-        return null;
-      }
-      return response.data;
-    } catch (error) {
-      console.error(error);
-      return null;
-    }
-  };
-
-const getOauthGoogleUrl = async (): Promise<{ url: string } | null> => {
+const getRecentGames = async (
+  id: string
+): Promise<RecentGameInterface[] | null> => {
   try {
-    const response = await apiUnauthenticated.get("/api/v1/auth/google");
+    const response = await apiUnauthenticated.get(`/api/v1/users/${id}/games`);
     if (response.status !== 200) {
       console.error(response);
       return null;
     }
-    return response.data;
+    const data: RecentGameInterface[] = response.data.map((game: any) => ({
+      opponentUsername: game.opponent_username,
+      opponentId: game.opponent_id ?? null,
+      result: game.result,
+      game_type: game.game_type,
+      date: new Date(game.date),
+    }));
+    return data;
   } catch (error) {
     console.error(error);
     return null;
   }
 };
 
-const OauthGoogleCallback = async (
-  code: string
-): Promise<LoginResponseInterface | null> => {
-  try {
-    const response = await apiUnauthenticated.get(
-      `/api/v1/auth/google/callback?code=${code}`
-    );
-    if (response.status !== 200) {
-      console.error(response);
-      return null;
-    }
-    return response.data;
-  } catch (error) {
-    return null;
-  }
-};
-
-export type { UserInterface, LoginResponseInterface };
-export {
-  loginUser,
-  registerUser,
-  fetchUserProfile,
-  logoutUser,
-  getAccessTokenWithRefreshToken,
-  getOauthGoogleUrl,
-  OauthGoogleCallback,
-};
+export { getUserStats, getRecentGames, getUserData };
+export type { UserStatsInterface, RecentGameInterface };

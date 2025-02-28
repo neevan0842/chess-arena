@@ -20,6 +20,7 @@ const App = () => {
         <Route index element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/profile/:userId" element={<ProfilePage />} />
 
         {/* Protected routes */}
         <Route element={<ProtectedRoute />}>
@@ -27,13 +28,13 @@ const App = () => {
           <Route path="/multiplayer" element={<MultiplayerGame />} />
           <Route path="/lobbyai" element={<LobbyAI />} />
           <Route path="/ai" element={<AIGame />} />
-          <Route path="/profile" element={<ProfilePage />} />
         </Route>
 
         {/* Google OAuth callback route */}
         <Route path="/auth/google/callback" element={<GoogleCallback />} />
 
         {/* Fallback route */}
+        <Route path="/not-found" element={<NotFound />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>

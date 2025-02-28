@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import User
 
 
-async def get_player_stats(user_id: str, db: AsyncSession) -> List[UserStatsResponse]:
+async def get_player_stats(user_id: str, db: AsyncSession) -> UserStatsResponse:
     result = await db.execute(
         select(Game).where(
             (Game.player_white_id == user_id) | (Game.player_black_id == user_id)
@@ -18,9 +18,9 @@ async def get_player_stats(user_id: str, db: AsyncSession) -> List[UserStatsResp
     if not games:
         return UserStatsResponse(
             total_games=0,
-            wins=0,
-            losses=0,
-            win_rate="0%",
+            multiplayer_wins=0,
+            multiplayer_losses=0,
+            multiplayer_win_rate="0%",
             most_played_color=None,
             best_streak=0,
             ai_games=0,
@@ -90,9 +90,9 @@ async def get_player_stats(user_id: str, db: AsyncSession) -> List[UserStatsResp
             current_streak = 0  # Reset streak on a loss or draw
     return UserStatsResponse(
         total_games=total_games,
-        wins=multiplayer_wins,
-        losses=multiplayer_losses,
-        win_rate=multiplayer_win_rate,
+        multiplayer_wins=multiplayer_wins,
+        multiplayer_losses=multiplayer_losses,
+        multiplayer_win_rate=multiplayer_win_rate,
         most_played_color=most_played_color,
         best_streak=best_streak,
         ai_games=total_ai_games,
@@ -110,7 +110,7 @@ async def get_recent_games_details(
         else_=Game.player_white_id,
     )
     result = await db.execute(
-        select(Game, User.username)
+        select(Game, User.username, User.id)
         .outerjoin(
             User,
             (User.id == opponent_alias),
@@ -124,11 +124,12 @@ async def get_recent_games_details(
 
     return [
         RecentGameResponse(
-            opponent=(
+            opponent_username=(
                 "AI"
                 if game.game_type == GameType.AI
                 else (opponent_username or "Unknown")
             ),
+            opponent_id=opponent_id if opponent_id else None,
             result=(
                 "win"
                 if (
@@ -156,5 +157,5 @@ async def get_recent_games_details(
             game_type=game.game_type,
             date=game.created_at,
         )
-        for game, opponent_username in games
+        for game, opponent_username, opponent_id in games
     ]

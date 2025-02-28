@@ -10,7 +10,7 @@ import {
   OauthGoogleCallback,
   registerUser,
   UserInterface,
-} from "../api/userApi";
+} from "../api/authApi";
 
 interface AuthState {
   accessToken: string | null;

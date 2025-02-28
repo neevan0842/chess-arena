@@ -15,8 +15,6 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 @router.get("/me", response_model=UserResponse)
 async def get_current_user(current_user: User = Depends(get_current_active_user)):
-    print(current_user.id, "\n\n\n\n", flush=True)
-    print(current_user.username, "\n\n\n\n", flush=True)
     return current_user
 
 

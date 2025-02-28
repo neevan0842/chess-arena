@@ -6,9 +6,9 @@ from app.core.constants import GameType
 
 class UserStatsResponse(BaseModel):
     total_games: int
-    wins: int
-    losses: int
-    win_rate: str
+    multiplayer_wins: int
+    multiplayer_losses: int
+    multiplayer_win_rate: str
     most_played_color: Optional[Literal["White", "Black"]]
     best_streak: int
     ai_games: int
@@ -18,7 +18,8 @@ class UserStatsResponse(BaseModel):
 
 
 class RecentGameResponse(BaseModel):
-    opponent: str
+    opponent_username: str
+    opponent_id: Optional[str]
     result: Literal["win", "loss", "draw"]
     game_type: GameType
     date: datetime

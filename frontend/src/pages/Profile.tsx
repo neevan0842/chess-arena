@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
@@ -11,35 +11,43 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
+import { useNavigate, useParams } from "react-router";
+import {
+  getRecentGames,
+  getUserData,
+  getUserStats,
+  RecentGameInterface,
+  UserStatsInterface,
+} from "@/api/userApi";
+import { UserInterface } from "@/api/authApi";
+import { formatJoinDate } from "@/utils/utilities";
 
 const ProfilePage = () => {
-  const [username, setUsername] = useState("ChessMaster123");
+  const { userId } = useParams();
+  const navigate = useNavigate();
+  const [userData, setUserData] = useState<UserInterface | null>(null);
+  const [userStats, setUserStats] = useState<UserStatsInterface | null>(null);
+  const [recentGames, setRecentGames] = useState<RecentGameInterface[] | null>(
+    null
+  );
 
-  const stats = {
-    totalGames: 50,
-    wins: 30,
-    losses: 18,
-    winRate: "60%",
-    mostPlayedColor: "White",
-    bestStreak: "5 Wins",
-  };
-
-  const games = [
-    {
-      opponent: "Player123",
-      result: "Win",
-      type: "Multiplayer",
-      date: "2d ago",
-    },
-    { opponent: "AI (Hard)", result: "Loss", type: "AI", date: "5d ago" },
-    {
-      opponent: "PlayerXYZ",
-      result: "Draw",
-      type: "Multiplayer",
-      date: "1w ago",
-    },
-  ];
+  useEffect(() => {
+    const getUserProfileDetails = async () => {
+      if (!userId) {
+        navigate("/not-found");
+      }
+      const data = await getUserData(userId!);
+      if (!data) {
+        navigate("/not-found");
+      }
+      const stats = await getUserStats(userId!);
+      const games = await getRecentGames(userId!);
+      setUserData(data);
+      setUserStats(stats);
+      setRecentGames(games);
+    };
+    getUserProfileDetails();
+  }, [userId, navigate]);
 
   return (
     <div className="max-w-3xl mx-auto p-6 space-y-6">
@@ -54,8 +62,12 @@ const ProfilePage = () => {
         </Avatar>
 
         <div>
-          <h2 className="text-xl font-bold">{username}</h2>
-          <p className="text-gray-500">Joined on: Jan 1, 2024</p>
+          <h2 className="text-xl font-bold">
+            {userData?.username ?? "username"}
+          </h2>
+          <p className="text-gray-500">
+            {`Joined on: ${formatJoinDate(userData?.created_at)}`}
+          </p>
         </div>
       </Card>
 
@@ -72,22 +84,37 @@ const ProfilePage = () => {
           <Card className="p-4">
             <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <p>
-                <strong>Total Games:</strong> {stats.totalGames}
+                <strong>Total Games:</strong> {userStats?.totalGames}
               </p>
               <p>
-                <strong>Wins:</strong> {stats.wins}
+                <strong>Multiplayer Wins:</strong> {userStats?.multiplayerWins}{" "}
               </p>
               <p>
-                <strong>Losses:</strong> {stats.losses}
+                <strong>Multiplayer Losses:</strong>
+                {userStats?.multiplayerLosses}
               </p>
               <p>
-                <strong>Win Rate:</strong> {stats.winRate}
+                <strong>Multiplayer Win Rate:</strong>
+                {userStats?.multiplayerWinRate}
               </p>
               <p>
-                <strong>Most Played Color:</strong> {stats.mostPlayedColor}
+                <strong>Most Played Color:</strong>
+                {userStats?.mostPlayedColor ?? "N/A"}
               </p>
               <p>
-                <strong>Best Streak:</strong> {stats.bestStreak}
+                <strong>Best Streak:</strong> {userStats?.bestStreak}
+              </p>
+              <p>
+                <strong>AI Games:</strong> {userStats?.aiGames}
+              </p>
+              <p>
+                <strong>AI Wins:</strong> {userStats?.aiWins}
+              </p>
+              <p>
+                <strong>AI Losses:</strong> {userStats?.aiLosses}
+              </p>
+              <p>
+                <strong>AI Win Rate:</strong> {userStats?.aiWinRate}
               </p>
             </CardContent>
           </Card>
@@ -106,14 +133,24 @@ const ProfilePage = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {games.map((game, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{game.opponent}</TableCell>
-                    <TableCell>{game.result}</TableCell>
-                    <TableCell>{game.type}</TableCell>
-                    <TableCell>{game.date}</TableCell>
+                {recentGames && recentGames.length > 0 ? (
+                  recentGames.map((game, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{game.opponentUsername}</TableCell>
+                      <TableCell>{game.result}</TableCell>
+                      <TableCell>{game.game_type}</TableCell>
+                      <TableCell>{`${formatJoinDate(
+                        new Date(game.date)
+                      )}`}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-4">
+                      No games played yet
+                    </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </Card>
@@ -124,12 +161,12 @@ const ProfilePage = () => {
           <Card className="p-4 space-y-4">
             <div>
               <label className="text-sm font-semibold">Change Username</label>
-              <Input
+              {/* <Input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="mt-1 w-full"
-              />
+              /> */}
             </div>
             <Button className="w-full sm:w-auto">Save Changes</Button>
           </Card>

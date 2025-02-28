@@ -1,0 +1,59 @@
+services:
+  redis:
+    image: redis:latest
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+
+  postgres:
+    image: postgres:latest
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env.docker.prod
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+    env_file:
+      - ./backend/.env.docker.prod
+    depends_on:
+      - redis
+      - postgres
+    command: sh -c "alembic upgrade head && fastapi run"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    command: bun run build
+    env_file:
+      - ./frontend/.env.docker.prod
+    volumes:
+      - dist:/code/dist
+
+  caddy:
+    image: caddy:latest
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    depends_on:
+      - frontend
+      - backend
+    volumes:
+      - ./Caddyfile:/etc/caddy
+      - dist:/srv
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  postgres_data:
+  redis_data:
+  dist:
+  caddy_data:
+  caddy_config:

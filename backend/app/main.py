@@ -24,7 +24,7 @@ async def lifespan(app: FastAPI):
         await engine.quit()
 
 
-app = FastAPI(lifespan=lifespan, debug=True)
+app = FastAPI(lifespan=lifespan)
 
 # CORS middleware configuration
 app.add_middleware(

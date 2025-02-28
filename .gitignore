@@ -8,6 +8,7 @@ __pycache__/
 # env
 .env
 .env.docker
+.env.docker.prod
 
 # C extensions
 *.so

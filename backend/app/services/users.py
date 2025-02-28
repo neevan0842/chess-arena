@@ -7,12 +7,12 @@ from app.core.constants import GameType, Winner
 from app.schemas.users import RecentGameResponse, UserStatsResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import User
+from app.services.auth import get_user
 
 
 async def get_player_stats(username: str, db: AsyncSession) -> UserStatsResponse:
-    user_result = await db.execute(select(User).where(User.username == username))
-    db_user = user_result.scalars().first()
-    if not db_user:
+    db_user = await get_user(username=username, db=db)
+    if not db_user or not db_user.is_active:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
@@ -113,9 +113,8 @@ async def get_player_stats(username: str, db: AsyncSession) -> UserStatsResponse
 async def get_recent_games_details(
     username: str, db: AsyncSession
 ) -> List[RecentGameResponse]:
-    user_result = await db.execute(select(User).where(User.username == username))
-    db_user = user_result.scalars().first()
-    if not db_user:
+    db_user = await get_user(username=username, db=db)
+    if not db_user or not db_user.is_active:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
@@ -138,6 +137,11 @@ async def get_recent_games_details(
 
     games = result.all()
 
+    print("\n\n\n", flush=True)
+    for game, opponent_username, opponent_id in games:
+        print(game, opponent_username, opponent_id, flush=True)
+    print("\n\n\n", flush=True)
+
     return [
         RecentGameResponse(
             opponent_username=(
@@ -151,19 +155,26 @@ async def get_recent_games_details(
                 if (
                     (game.winner == Winner.WHITE and game.player_white_id == user_id)
                     or (game.winner == Winner.BLACK and game.player_black_id == user_id)
+                    or (
+                        game.game_type == GameType.AI
+                        and game.winner in [Winner.WHITE, Winner.BLACK]
+                    )
                 )
                 else (
                     "loss"
                     if (
-                        game.winner in [Winner.WHITE, Winner.BLACK]
-                        and (
-                            (
-                                game.winner == Winner.WHITE
-                                and game.player_black_id == user_id
-                            )
-                            or (
-                                game.winner == Winner.BLACK
-                                and game.player_white_id == user_id
+                        (game.winner == Winner.AI and game.game_type == GameType.AI)
+                        or (
+                            game.winner in [Winner.WHITE, Winner.BLACK]
+                            and (
+                                (
+                                    game.winner == Winner.WHITE
+                                    and game.player_black_id == user_id
+                                )
+                                or (
+                                    game.winner == Winner.BLACK
+                                    and game.player_white_id == user_id
+                                )
                             )
                         )
                     )

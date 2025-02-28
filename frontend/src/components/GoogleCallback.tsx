@@ -18,6 +18,8 @@ const GoogleCallback = () => {
           if (useAuthStore.getState().isLoggedIn) {
             toast.success("Logged in successfully");
             navigate("/");
+          } else {
+            navigate("/login");
           }
         } else {
           toast.error("Google login failed");
@@ -28,7 +30,7 @@ const GoogleCallback = () => {
       }
     };
     processOauth();
-  }, []);
+  }, [navigate, googleCallback, searchParams]);
 
   return (
     <div className="flex min-h-screen items-center justify-center">

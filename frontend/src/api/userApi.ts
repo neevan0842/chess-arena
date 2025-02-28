@@ -1,4 +1,4 @@
-import { apiUnauthenticated } from "./api";
+import { apiAuthenticated, apiUnauthenticated } from "./api";
 import { UserInterface } from "./authApi";
 
 interface UserStatsInterface {
@@ -95,5 +95,19 @@ const getRecentGames = async (
   }
 };
 
-export { getUserStats, getRecentGames, getUserData };
+const deleteUser = async () => {
+  try {
+    const response = await apiAuthenticated.delete(`/api/v1/users/me`);
+    if (response.status !== 204) {
+      console.error(response);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
+};
+
+export { getUserStats, getRecentGames, getUserData, deleteUser };
 export type { UserStatsInterface, RecentGameInterface };

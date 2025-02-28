@@ -2,7 +2,7 @@ services:
   redis:
     image: redis:latest
     ports:
-      - "6379:6379"
+      - "6378:6379"
     restart: unless-stopped
 
   postgres:
@@ -13,7 +13,7 @@ services:
       POSTGRES_PASSWORD: password123
       POSTGRES_DB: chess
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 

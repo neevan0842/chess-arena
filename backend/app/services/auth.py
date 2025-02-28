@@ -132,7 +132,7 @@ async def get_user(
 # authenticate user
 async def authenticate_user(username: str, password: str, db: AsyncSession):
     db_user = await get_user(username=username, db=db)
-    if not db_user:
+    if not db_user or not db_user.is_active:
         return False
     if not verify_password(password, db_user.hashed_password):
         return False
@@ -189,7 +189,11 @@ async def get_token_via_google_code(code: str, db: AsyncSession):
 
         # Step 3: Check if user exists in the database
         db_user = await get_user(email=email, db=db)
-        if not db_user:
+        if db_user:
+            if not db_user.is_active:
+                db_user.is_active = True
+                await db.commit()
+        else:
             # Generate a unique username
             username = await generate_unique_username(
                 user_info_data.get("email").split("@")[0], db
@@ -273,7 +277,7 @@ async def get_current_user(
     stmt = select(User).where(User.id == user_id)
     result = await db.execute(stmt)
     db_user = result.scalars().first()
-    if db_user is None:
+    if db_user is None or not db_user.is_active:
         raise credentials_exception
     return db_user
 

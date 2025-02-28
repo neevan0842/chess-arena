@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { useNavigate, useParams } from "react-router";
 import {
+  deleteUser,
   getRecentGames,
   getUserData,
   getUserStats,
@@ -21,9 +22,12 @@ import {
 } from "@/api/userApi";
 import { UserInterface } from "@/api/authApi";
 import { formatJoinDate } from "@/utils/utilities";
+import useAuthStore from "@/store/useAuthStore";
+import toast from "react-hot-toast";
 
 const ProfilePage = () => {
   const { username } = useParams();
+  const { user, resetAuth } = useAuthStore();
   const navigate = useNavigate();
   const [userData, setUserData] = useState<UserInterface | null>(null);
   const [userStats, setUserStats] = useState<UserStatsInterface | null>(null);
@@ -35,6 +39,17 @@ const ProfilePage = () => {
     if (!game) return;
     if (game.game_type === "ai") return;
     navigate(`/profile/${game.opponentUsername}`);
+  };
+
+  const handleDeleteAccount = async () => {
+    const response = await deleteUser();
+    if (response) {
+      resetAuth();
+      toast.success("Account deleted successfully");
+      navigate("/");
+    } else {
+      toast.error("Failed to delete account");
+    }
   };
 
   useEffect(() => {
@@ -82,7 +97,9 @@ const ProfilePage = () => {
         <TabsList className="flex flex-wrap gap-2">
           <TabsTrigger value="stats">Stats</TabsTrigger>
           <TabsTrigger value="games">Recent Games</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
+          {user?.username === username && (
+            <TabsTrigger value="settings">Settings</TabsTrigger>
+          )}
         </TabsList>
 
         {/* Stats Tab */}
@@ -90,37 +107,38 @@ const ProfilePage = () => {
           <Card className="p-4">
             <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <p>
-                <strong>Total Games:</strong> {userStats?.totalGames}
+                <strong>Total Games : </strong> {userStats?.totalGames}
               </p>
               <p>
-                <strong>Multiplayer Wins:</strong> {userStats?.multiplayerWins}{" "}
+                <strong>Multiplayer Wins : </strong>
+                {userStats?.multiplayerWins}
               </p>
               <p>
-                <strong>Multiplayer Losses:</strong>
+                <strong>Multiplayer Losses : </strong>
                 {userStats?.multiplayerLosses}
               </p>
               <p>
-                <strong>Multiplayer Win Rate:</strong>
+                <strong>Multiplayer Win Rate : </strong>
                 {userStats?.multiplayerWinRate}
               </p>
               <p>
-                <strong>Most Played Color:</strong>
+                <strong>Most Played Color : </strong>
                 {userStats?.mostPlayedColor ?? "N/A"}
               </p>
               <p>
-                <strong>Best Streak:</strong> {userStats?.bestStreak}
+                <strong>Best Streak : </strong> {userStats?.bestStreak}
               </p>
               <p>
-                <strong>AI Games:</strong> {userStats?.aiGames}
+                <strong>AI Games : </strong> {userStats?.aiGames}
               </p>
               <p>
-                <strong>AI Wins:</strong> {userStats?.aiWins}
+                <strong>AI Wins : </strong> {userStats?.aiWins}
               </p>
               <p>
-                <strong>AI Losses:</strong> {userStats?.aiLosses}
+                <strong>AI Losses : </strong> {userStats?.aiLosses}
               </p>
               <p>
-                <strong>AI Win Rate:</strong> {userStats?.aiWinRate}
+                <strong>AI Win Rate : </strong> {userStats?.aiWinRate}
               </p>
             </CardContent>
           </Card>
@@ -146,7 +164,7 @@ const ProfilePage = () => {
                         onClick={() => handleUserRedirect(game)}
                         className="cursor-pointer"
                       >
-                        {game.opponentUsername}
+                        <strong>{game.opponentUsername}</strong>
                       </TableCell>
                       <TableCell>{game.result}</TableCell>
                       <TableCell>{game.game_type}</TableCell>
@@ -168,20 +186,18 @@ const ProfilePage = () => {
         </TabsContent>
 
         {/* Settings Tab */}
-        <TabsContent value="settings">
-          <Card className="p-4 space-y-4">
-            <div>
-              <label className="text-sm font-semibold">Change Username</label>
-              {/* <Input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="mt-1 w-full"
-              /> */}
-            </div>
-            <Button className="w-full sm:w-auto">Save Changes</Button>
-          </Card>
-        </TabsContent>
+        {user?.username === username && (
+          <TabsContent value="settings">
+            <Card className="p-4 space-y-4">
+              <Button
+                onClick={handleDeleteAccount}
+                className="w-full sm:w-auto bg-red-600"
+              >
+                Delete Account
+              </Button>
+            </Card>
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

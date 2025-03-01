@@ -26,12 +26,12 @@ const Home = () => {
   }, []);
 
   return (
-    <div>
+    <div className="relative flex flex-col min-h-screen">
+      {/* Background Section */}
       <div
-        className="relative flex min-h-screen flex-col items-center justify-center bg-cover bg-center"
+        className="flex flex-col items-center justify-center flex-grow bg-cover bg-center relative"
         style={{ backgroundImage: "url('/chessLanding.jpg')" }}
       >
-        {/* Overlay for better text visibility */}
         <div className="absolute inset-0 bg-black/60"></div>
 
         {/* Navbar */}
@@ -105,6 +105,20 @@ const Home = () => {
           </div>
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="absolute bottom-5 left-1/2 transform -translate-x-1/2  text-white text-center text-xs md:text-sm px-4 py-2 rounded-md">
+        <p>
+          <a
+            href="https://github.com/neevan0842/chess-arena"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline text-gray-300 hover:text-gray-100"
+          >
+            Contribute on GitHub
+          </a>
+        </p>
+      </footer>
     </div>
   );
 };

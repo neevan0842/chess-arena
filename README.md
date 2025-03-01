@@ -61,13 +61,13 @@ cd chess-arena
 
 We provide **`.env.sample` files** in both the **frontend** and **backend** directories.
 
-- For **local development**, create `.env` file using `.env.sample`.
+- For **local development**, create `.env` file using `.env.sample` (only works on linux).
 - For **Docker Compose development**, create `.env.docker`file using `.env.sample`..
 
 ### **3️⃣ Run the Application (Docker Recommended)**
 
 ```sh
-docker-compose up -d --build
+docker-compose up --build --watch
 ```
 
 ---

@@ -1,10 +1,13 @@
 chessarena.chickenkiller.com {
     root * /srv
-    encode gzip
+    encode zstd gzip
     file_server
+
+    # Serve index.html for unknown routes (React SPA Fix)
+    try_files {path} /index.html
 }
 
 api.chessarena.chickenkiller.com {
     reverse_proxy backend:8000
-    encode gzip
+    encode zstd gzip
 }

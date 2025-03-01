@@ -1,0 +1,32 @@
+name: remote ssh command
+on:
+  push:
+    branches:
+      - main
+jobs:
+  deploy:
+    name: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: executing remote ssh commands using password
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          script: |
+            # Navigate to the project directory
+            cd /home/naveen/chess-arena
+
+            # Pull latest code from Git
+            git pull
+
+            # Stop and remove old containers
+            docker-compose -f docker-compose.prod.yml down
+
+            # Rebuild and restart containers
+            docker-compose -f docker-compose.prod.yml up -d --build
+
+            # Clean up unused images and containers
+            docker image prune -f
+            docker container prune -f

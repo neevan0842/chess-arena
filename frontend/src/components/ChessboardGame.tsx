@@ -152,7 +152,7 @@ const ChessboardGame: React.FC<ChessboardGameProps> = ({
   };
 
   return (
-    <div className="w-96">
+    <div className="w-full max-w-xs md:w-96">
       <Chessboard
         id="ClickToMove"
         animationDuration={200}

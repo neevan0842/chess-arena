@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from app.api.v1.endpoints import auth, users, game, ws
 from app.core.config import settings
 from app.core.redis_client import redis_client, is_redis_available
+from app.middlewares.logger import LoggingMiddleware
 
 FRONTEND_URLS = settings.FRONTEND_URLS
 STOCKFISH_PATH = settings.STOCKFISH_PATH
@@ -34,6 +35,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(LoggingMiddleware)
 
 app.include_router(router=auth.router, prefix="/api/v1")
 app.include_router(router=users.router, prefix="/api/v1")
